@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+
+{% block title %}Правила форума{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card shadow">
+        <div class="card-header bg-dark text-white">
+            <h2 class="mb-0">Правила нашего сообщества</h2>
+        </div>
+        <div class="card-body">
+            <ol>
+                <li><strong>Уважение:</strong> Будьте вежливы к другим участникам.</li>
+                <li><strong>Кириллица:</strong> Регистрация имен на кириллице разрешена и приветствуется.</li>
+                <li><strong>Контент:</strong> Запрещена публикация спама и материалов, нарушающих закон.</li>
+                <li><strong>Темы:</strong> Старайтесь публиковать статьи в соответствующих категориях.</li>
+            </ol>
+            <hr>
+            <a href="{% url 'index' %}" class="btn btn-primary">Вернуться на главную</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

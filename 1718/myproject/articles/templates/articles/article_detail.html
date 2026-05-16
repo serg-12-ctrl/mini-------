@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+{% block title %}{{ article.title }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <article>
+            <h1>{{ article.title }}</h1>
+            <p class="text-muted">
+                Автор: {{ article.author.username }} | {{ article.pub_date|date:"d.m.Y H:i" }}
+            </p>
+
+            <!-- 1. ДОБАВЛЕНО: Вывод изображения -->
+            {% if article.image %}
+            <div class="mb-4 text-center">
+                <img src="{{ article.image.url }}" class="img-fluid rounded shadow-sm" alt="{{ article.title }}" style="max-height: 500px; width: 100%; object-fit: cover;">
+            </div>
+            {% endif %}
+            
+            {% if article.tags.all %}
+                <div class="mb-3">
+                    {% for tag in article.tags.all %}
+                        <span class="badge bg-secondary">{{ tag.name }}</span>
+                    {% endfor %}
+                </div>
+            {% endif %}
+            
+            <div class="content fs-5">
+                {{ article.content|linebreaks }}
+            </div>
+        </article>
+        
+        <hr class="my-5">
+        
+        <!-- Секция комментариев -->
+        <div class="mt-4">
+            <h4>Комментарии ({{ comments.count }})</h4>
+            
+            {% if user.is_authenticated %}
+            <form method="post" class="mb-4 card card-body shadow-sm">
+                {% csrf_token %}
+                <div class="mb-3">
+                    {{ form.text }} <!-- Использует ваши стили из forms.py -->
+                </div>
+                <button type="submit" class="btn btn-primary">Опубликовать</button>
+            </form>
+            {% else %}
+            <div class="alert alert-light border">
+                <a href="{% url 'login' %}">Войдите</a>, чтобы принять участие в обсуждении.
+            </div>
+            {% endif %}
+        </div>
+        
+        <div class="comments">
+            {% for comment in comments %}
+            <div class="card mb-2 border-0 border-bottom">
+                <div class="card-body px-0">
+                    <div class="d-flex justify-content-between mb-1">
+                        <strong>{{ comment.user.username }}</strong>
+                        <small class="text-muted">{{ comment.created_at|date:"d.m.Y H:i" }}</small>
+                    </div>
+                    <p class="card-text">{{ comment.text }}</p>
+                </div>
+            </div>
+            {% empty %}
+            <p class="text-muted">Станьте первым, кто прокомментирует эту запись!</p>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <!-- Правая колонка -->
+    <div class="col-md-4">
+        <div class="card sticky-top" style="top: 20px;">
+            <div class="card-body">
+                {% if user.is_authenticated %}
+                    <!-- 2. ИСПРАВЛЕНО: Используем переменную is_saved из view -->
+                    {% if is_saved %}
+                        <a href="{% url 'unsave_article' article.pk %}" class="btn btn-danger w-100 mb-2">
+                            <i class="bi bi-bookmark-x"></i> Удалить из избранного
+                        </a>
+                    {% else %}
+                        <a href="{% url 'save_article' article.pk %}" class="btn btn-success w-100 mb-2">
+                            <i class="bi bi-bookmark-plus"></i> Сохранить статью
+                        </a>
+                    {% endif %}
+                {% else %}
+                    <a href="{% url 'login' %}" class="btn btn-outline-secondary w-100 mb-2">Войдите, чтобы сохранить</a>
+                {% endif %}
+                
+                <hr>
+                <h6>Теги этой статьи:</h6>
+                {% for tag in article.tags.all %}
+                    <a href="{% url 'index' %}?q={{ tag.name }}" class="badge bg-light text-dark text-decoration-none border">{{ tag.name }}</a>
+                {% empty %}
+                    <small class="text-muted">Тегов нет</small>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

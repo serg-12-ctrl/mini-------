@@ -1,0 +1,137 @@
+/* 1. Базовые настройки */
+body {
+    background-color: #f0f2f5;
+    color: #1c1e21;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+h1 {
+    color: #2c3e50;
+    font-weight: 700;
+}
+
+/* 2. Шапка и навигация */
+.navbar-brand {
+    font-weight: bold;
+    font-size: 1.5rem;
+}
+
+/* Центрирование и растягивание */
+.header-container, .container-fluid {
+    max-width: 100% !important;
+}
+
+/* Анимация кнопки "Избранное" */
+.nav-link[href*="saved"] {
+    position: relative;
+    transition: all 0.3s ease;
+    font-weight: 500;
+}
+
+.nav-link[href*="saved"]:hover {
+    color: #ffc107 !important;
+    text-shadow: 0 0 8px rgba(255, 193, 7, 0.6);
+    transform: scale(1.05);
+}
+
+.nav-link[href*="saved"] .star-icon {
+    display: inline-block;
+    transition: transform 0.3s ease;
+}
+
+.nav-link[href*="saved"]:hover .star-icon {
+    animation: pulse-star 1s infinite;
+}
+
+@keyframes pulse-star {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.3); }
+    100% { transform: scale(1); }
+}
+
+/* 3. Карточки новостей */
+.article-card {
+    border: none;
+    border-radius: 15px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    background-color: #fff;
+    overflow: hidden;
+}
+
+.article-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 24px rgba(0,0,0,0.15) !important;
+}
+
+.card-title a {
+    color: #2c3e50;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.card-title a:hover {
+    color: #007bff;
+}
+
+/* 4. Изображения в карточках */
+.article-img-container {
+    flex-shrink: 0;
+    width: 200px;
+}
+
+.article-img-container img {
+    width: 200px !important;
+    height: 150px !important;
+    object-fit: cover !important;
+    border-radius: 10px;
+    display: block;
+}
+
+/* 5. Боковые панели */
+.sidebar-card {
+    border: none;
+    border-radius: 15px;
+    background-color: #16bc48;
+}
+
+.sidebar-header {
+    border-radius: 15px 15px 0 0 !important;
+    font-weight: bold;
+}
+/* Стили для активной кнопки сортировки */
+.sidebar-card .btn-primary.rounded-pill {
+    border: 2px solid #0056b3 !important; /* Темно-синяя рамка */
+    box-shadow: 0 0 10px rgba(13, 110, 253, 0.4); /* Эффект свечения */
+    font-weight: 600;
+}
+
+/* Эффект при наведении на неактивные кнопки */
+.sidebar-card .btn-outline-primary.rounded-pill:hover {
+    border: 2px solid #0d6efd;
+    background-color: rgba(13, 110, 253, 0.1);
+    color: #0d6efd;
+}
+/* 6. Пагинация */
+.pagination .page-link {
+    border: none;
+    margin: 0 3px;
+    border-radius: 8px;
+    color: #2c3e50;
+    background-color: #fff;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.pagination .page-item.active .page-link {
+    background-color: #0d6efd;
+    color: white;
+    box-shadow: 0 4px 10px rgba(13, 110, 253, 0.3);
+}
+.text-center p {
+    color: #6c757d;
+    font-size: 0.9rem;
+    margin-bottom: 5px;
+}
+
+.btn-outline-success.rounded-pill {
+    transition: all 0.3s;
+}

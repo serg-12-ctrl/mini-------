@@ -1,0 +1,70 @@
+/* Общий фон и шрифты */
+body {
+    background-color: #f0f2f5;
+    color: #1c1e21;
+}
+
+/* Карточка статьи с эффектом при наведении */
+.article-card {
+    border: none;
+    border-radius: 15px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.article-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 24px rgba(0,0,0,0.15) !important;
+}
+
+/* Стилизация изображения */
+.article-img-container img {
+    width: 200px;           
+     height: 150px;          
+    object-fit: cover;      
+    border-radius: 10px;    
+    display: block;         
+}
+
+/* Дополнительно: чтобы контейнер не растягивался */
+.article-img-container {
+    flex-shrink: 0;         
+    width: 200px;
+}
+
+/* Боковая панель (Поиск и Сортировка) */
+.sidebar-card {
+    border: none;
+    border-radius: 15px;
+}
+
+.sidebar-header {
+    border-radius: 15px 15px 0 0 !important;
+    font-weight: bold;
+}
+
+/* Кастомные кнопки пагинации */
+.pagination .page-link {
+    border-radius: 8px;
+    margin: 0 2px;
+    border: none;
+    background-color: #fff;
+    color: #333;
+}
+
+.pagination .page-item.active .page-link {
+    background-color: #0d6efd;
+    color: white;
+}
+
+.navbar-brand {
+    margin-left: 0 !important;
+    margin-right: auto !important;
+    padding-left: 0 !important;
+}
+
+/* Растягивание контейнера шапки на всю ширину */
+.header-container, .container {
+    max-width: 100% !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+}

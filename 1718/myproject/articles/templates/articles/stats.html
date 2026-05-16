@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<!-- Переносим расчеты в CSS классы, чтобы не «злить» редактор кода -->
+<style>
+    {% with total=active|add:inactive %}
+    .active-bar { width: {% if total > 0 %}{% widthratio active total 100 %}{% else %}0{% endif %}%; }
+    .inactive-bar { width: {% if total > 0 %}{% widthratio inactive total 100 %}{% else %}0{% endif %}%; }
+    {% endwith %}
+</style>
+
+<div class="container mt-5">
+    <div class="card shadow-lg p-4" style="max-width: 700px; margin: auto; border-radius: 20px;">
+        <h2 class="text-center mb-4 fw-bold">📈 Аналитика портала</h2>
+
+        {% with total_users=active|add:inactive %}
+        <h5 class="mb-3 text-secondary">Пользователи</h5>
+
+        <p class="mb-1">Активные ({{ active }})</p>
+        <div class="progress mb-3" style="height: 25px; border-radius: 10px;">
+            <!-- Используем класс вместо inline-расчета -->
+            <div class="progress-bar bg-success active-bar" role="progressbar" 
+                 aria-valuenow="{{ active }}" aria-valuemin="0" aria-valuemax="100">
+                {{ active }} чел.
+            </div>
+        </div>
+
+        <p class="mb-1">Заблокированные ({{ inactive }})</p>
+        <div class="progress mb-4" style="height: 25px; border-radius: 10px;">
+            <!-- Используем класс вместо inline-расчета -->
+            <div class="progress-bar bg-danger inactive-bar" role="progressbar" 
+                 aria-valuenow="{{ inactive }}" aria-valuemin="0" aria-valuemax="100">
+                {{ inactive }} чел.
+            </div>
+        </div>
+
+        <div class="alert alert-primary text-center border-0 shadow-sm mb-4" style="border-radius: 12px;">
+            Всего зарегистрировано: <strong>{{ total_users }}</strong> чел.
+        </div>
+        {% endwith %}
+
+        <h5 class="mb-3 text-secondary border-top pt-3">Контент</h5>
+        <div class="row g-3 mb-4">
+            <div class="col-6">
+                <div class="card bg-light border-0 p-3 text-center h-100" style="border-radius: 15px;">
+                    <h6 class="text-muted small text-secondary" style="font-size: 0.7rem;">ВСЕГО СТАТЕЙ</h6>
+                    <h3 class="text-primary fw-bold">{{ total_articles }}</h3>
+                </div>
+            </div>
+            <div class="col-6">
+                <div class="card bg-light border-0 p-3 text-center h-100" style="border-radius: 15px;">
+                    <h6 class="text-muted small text-secondary" style="font-size: 0.7rem;">НАПИСАНО СЕГОДНЯ</h6>
+                    <h3 class="text-info fw-bold">{{ today_articles }}</h3>
+                </div>
+            </div>
+        </div>
+
+        <a href="{% url 'index' %}" class="btn btn-dark w-100 rounded-pill py-2 shadow-sm">
+            <i class="bi bi-house-door"></i> Назад на главную
+        </a>
+    </div>
+</div>
+{% endblock %}

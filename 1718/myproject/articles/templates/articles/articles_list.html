@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Список статей</title>
+</head>
+<body>
+    <h1>Список статей</h1>
+
+    <!-- Форма поиска и сортировки -->
+   <form method="get" action="{% url 'article_list' %}">
+        <input type="text" name="q" value="{{ query|default:'' }}" placeholder="Поиск...">
+        
+        <select name="sort">
+            <option value="date" {% if current_sort == 'date' %}selected{% endif %}>По дате</option>
+            <option value="author" {% if current_sort == 'author' %}selected{% endif %}>По автору</option>
+            <option value="title" {% if current_sort == 'title' %}selected{% endif %}>По названию</option>
+        </select>
+        
+        <button type="submit">Применить</button>
+    </form>
+
+    <hr>
+
+    <ul>
+       
+        {% for article in page_obj %}
+            <li>
+                <strong>{{ article.title }}</strong> — {{ article.author.username }} 
+                ({{ article.pub_date|date:"d.m.Y" }})
+            </li>
+        {% empty %}
+            <li>Статей пока нет.</li>
+        {% endfor %}
+    </ul>
+
+    <!-- Пагинация с сохранением сортировки и поиска -->
+    <div class="pagination">
+        {% if page_obj.has_previous %}
+            <a href="?page=1&sort={{ current_sort }}&q={{ query|default:'' }}">&laquo; Первая</a>
+            <a href="?page={{ page_obj.previous_page_number }}&sort={{ current_sort }}&q={{ query|default:'' }}">Назад</a>
+        {% endif %}
+
+        <span>Страница {{ page_obj.number }} из {{ page_obj.paginator.num_pages }}</span>
+
+        {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}&sort={{ current_sort }}&q={{ query|default:'' }}">Вперед</a>
+            <a href="?page={{ page_obj.paginator.num_pages }}&sort={{ current_sort }}&q={{ query|default:'' }}">Последняя &raquo;</a>
+        {% endif %}
+    </div>
+
+</body>
+</html>

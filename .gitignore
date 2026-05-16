@@ -1,0 +1,23 @@
+# Python
+*.pyc
+__pycache__/
+
+# Django
+*.log
+*.pot
+*.pyc
+__pycache__/
+db.sqlite3
+media/
+
+# Виртуальное окружение
+venv/
+env/
+.venv/
+
+# Файлы IDE
+.idea/
+.vscode/
+*.swp
+
+1718.7z
