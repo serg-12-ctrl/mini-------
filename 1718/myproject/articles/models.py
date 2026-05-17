@@ -97,3 +97,15 @@ class Comment(models.Model):
         ordering = ['created_at']
         verbose_name='Комментарий'
         verbose_name_plural = 'Комментарии'
+
+class SiteStatistic(models.Model):
+    # Связываем запись статистики с конкретным пользователем
+    # null=True и blank=True нужны, если статистика может собираться для гостей
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
+    action = models.CharField(max_length=255)  # Например: "Создал статью", "Зашел на сайт"
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        # Если пользователь есть, выводим его логин, иначе — "Гость"
+        username = self.user.username if self.user else "Гость"
+        return f"{username} — {self.action} ({self.timestamp})"        

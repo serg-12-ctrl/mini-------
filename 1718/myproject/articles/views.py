@@ -9,11 +9,26 @@ from django.core.paginator import Paginator
 from .models import Article, Tag, SavedArticle, Comment
 from .forms import CommentForm
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
-from .forms import CommentForm, ArticleForm  # Убедитесь, что ArticleForm импортирован
+from .forms import CommentForm, ArticleForm  
 from django.http import HttpResponse, FileResponse
-#from .reports import generate_pdf_buffer  # Добавьте это в блок импортов
+#from .reports import generate_pdf_buffer  
 
-from django.http import HttpResponse, FileResponse # Добавьте FileResponse сюда
+from django.http import HttpResponse, FileResponse 
+from django.shortcuts import render, redirect
+from .models import SiteStatistic
+
+def create_article_view(request):
+    if request.method == 'POST':
+        # ... ваш код создания статьи ...
+        
+        # Записываем действие в статистику
+        if request.user.is_authenticated:
+            SiteStatistic.objects.create(
+                user=request.user,  # Передаем текущего вошедшего пользователя
+                action="Добавил новую статью"
+            )
+        return redirect('index')
+    return render(request, 'create_article.html')
 
 
 
@@ -261,6 +276,11 @@ def stats_view(request):
     active_w = (active_count / total * 100) if total > 0 else 0
     inactive_w = (inactive_count / total * 100) if total > 0 else 0
 
+    active_w = (active_count / total * 100) if total > 0 else 0
+    inactive_w = (inactive_count / total * 100) if total > 0 else 0
+
+    newest_user = User.objects.order_by('-date_joined').first()
+
     context = {
         'active': active_count,
         'inactive': inactive_count,
@@ -268,6 +288,8 @@ def stats_view(request):
         'inactive_w': inactive_w,   # Передаем готовое число
         'total_articles': Article.objects.count(),
         'today_articles': Article.objects.filter(pub_date__date=date.today()).count(),
+
+         'newest_user': newest_user, 
     }
     return render(request, 'articles/stats.html', context)
 

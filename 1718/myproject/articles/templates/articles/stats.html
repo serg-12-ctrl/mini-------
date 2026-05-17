@@ -55,6 +55,34 @@
             </div>
         </div>
 
+        <!--  Последний зарегистрированный пользователь -->
+                <!-- БЛОК: Последний зарегистрированный пользователь (с эмодзи) -->
+        <h5 class="mb-3 text-secondary border-top pt-3">Новые участники</h5>
+        <div class="card bg-light border-0 p-3 mb-4" style="border-radius: 15px;">
+            {% if newest_user %}
+                <div class="d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center">
+                        <!-- Круглый контейнер с эмодзи вместо иконки -->
+                        <div class="bg-white rounded-circle d-flex align-items-center justify-content-center shadow-sm me-3" style="width: 45px; height: 45px; min-width: 45px;">
+                            <span style="font-size: 1.3rem;">👤</span>
+                        </div>
+                        <div>
+                            <h6 class="text-muted small mb-0" style="font-size: 0.7rem;">ПОСЛЕДНИЙ ЛОГИН</h6>
+                            <h4 class="text-dark fw-bold mb-0" style="font-size: 1.25rem;">{{ newest_user.username }}</h4>
+                        </div>
+                    </div>
+                    <div class="text-end">
+                        <span class="badge bg-white text-secondary border shadow-sm rounded-pill px-3 py-2">
+                            {{ newest_user.date_joined|date:"d.m.Y в H:i" }}
+                        </span>
+                    </div>
+                </div>
+            {% else %}
+                <div class="text-center text-muted py-2">Пользователи еще не зарегистрированы</div>
+            {% endif %}
+        </div>
+
+
         <a href="{% url 'index' %}" class="btn btn-dark w-100 rounded-pill py-2 shadow-sm">
             <i class="bi bi-house-door"></i> Назад на главную
         </a>
