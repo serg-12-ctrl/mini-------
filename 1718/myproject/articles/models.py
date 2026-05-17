@@ -2,8 +2,12 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.urls import reverse
 from django.utils import timezone
+from PIL import Image 
+import os 
 
-# Create your models here.
+
+
+
 class Tag(models.Model):
     name = models.CharField(max_length=50, unique=True)
     slug = models.SlugField(unique=True)
@@ -28,6 +32,32 @@ class Article(models.Model):
     pub_date = models.DateTimeField(default=timezone.now, verbose_name='Дата публикации')
     tags = models.ManyToManyField(Tag, blank=True, verbose_name='Теги')
     is_public = models.BooleanField(default=True, verbose_name='Публичная статья')
+
+    def save(self, *args, **kwargs):
+        # Сначала сохраняем объект, чтобы файл записался на диск
+        super().save(*args, **kwargs)
+
+        if self.image:
+            # Открываем сохраненное изображение
+            img = Image.open(self.image.path)
+
+            # Задаем максимальные желаемые размеры (например, 800x800)
+            max_size = (800, 800)
+
+            # Проверяем, превышает ли картинка заданные размеры
+            if img.height > max_size[1] or img.width > max_size[0]:
+                # Метод thumbnail пропорционально сжимает картинку без искажений
+                img.thumbnail(max_size)
+                # Перезаписываем файл в том же качестве
+                img.save(self.image.path, quality=90)
+            
+        
+        if self.image:
+            # Выводим размеры ДО или ПОСЛЕ сжатия
+            print(f"--- Файл: {self.image.name} ---")
+            print(f"--- Разрешение: {self.image.width}x{self.image.height}px ---")
+            print(f"--- Вес: {os.path.getsize(self.image.path) / 1024:.2f} Кб ---")
+
 
     def __str__(self):
         # Changed from self.name to self.title
