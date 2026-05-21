@@ -5,34 +5,18 @@
 {% block content %}
 <div class="container mt-4">
     <h2 class="mb-4">Часто задаваемые вопросы</h2>
-    <div class="accordion" id="faqAccordion">
-        <!-- Вопрос 1 -->
-        <div class="accordion-item">
-            <h2 class="accordion-header">
-                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
-                    Можно ли использовать русские буквы в имени?
-                </button>
-            </h2>
-            <div id="faq1" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
-                <div class="accordion-body">
-                    Да, наш портал поддерживает регистрацию на <strong>кириллице</strong>.
-                </div>
-            </div>
-        </div>
-        <!-- Вопрос 2 -->
-        <div class="accordion-item">
-            <h2 class="accordion-header">
-                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
-                    Как добавить статью в избранное?
-                </button>
-            </h2>
-            <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
-                <div class="accordion-body">
-                    Нажмите на иконку флажка (закладки) в карточке статьи. Список появится в разделе «Избранное».
-                </div>
-            </div>
-        </div>
+    
+    <div class="list-group">
+        {% for item in questions %}
+            <!-- Ссылка ведет на страницу конкретного вопроса, передавая его id (item.pk) -->
+            <a href="{% url 'faq_detail' item.pk %}" class="list-group-item list-group-item-action font-weight-bold py-3">
+                {{ item.question }} &rarr;
+            </a>
+        {% empty %}
+            <div class="alert alert-info">Раздел FAQ пуст.</div>
+        {% endfor %}
     </div>
-    <a href="{% url 'index' %}" class="btn btn-secondary mt-3">Назад</a>
+    
+    <a href="{% url 'index' %}" class="btn btn-secondary mt-4">Назад на главную</a>
 </div>
 {% endblock %}

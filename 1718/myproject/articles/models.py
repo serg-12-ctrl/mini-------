@@ -6,7 +6,17 @@ from PIL import Image
 import os 
 
 
+class FAQ(models.Model):
+    question = models.CharField(max_length=255, verbose_name="Вопрос")
+    answer = models.TextField(verbose_name="Ответ")
+    is_published = models.BooleanField(default=True, verbose_name="Опубликовано")
 
+    class Meta:
+        verbose_name = "Часто задаваемый вопрос"
+        verbose_name_plural = "Часто задаваемые вопросы"
+
+    def __str__(self):
+        return self.question
 
 class Tag(models.Model):
     name = models.CharField(max_length=50, unique=True)

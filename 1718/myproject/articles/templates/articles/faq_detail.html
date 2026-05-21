@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ question.question }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <!-- Сам вопрос -->
+            <h2 class="card-title text-primary mb-4">{{ question.question }}</h2>
+            
+            <hr>
+            
+            <!-- Ответ на него -->
+            <div class="card-text fs-5" style="white-space: pre-line; line-height: 1.7; color: #333;">
+                {{ question.answer }}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Кнопка возвращает пользователя обратно к полному списку вопросов -->
+    <a href="{% url 'faq_page' %}" class="btn btn-outline-secondary mt-4">&larr; Назад к списку вопросов</a>
+</div>
+{% endblock %}

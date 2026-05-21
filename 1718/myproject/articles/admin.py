@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Article, Tag, SavedArticle, Comment
+from .models import Article, Tag, SavedArticle, Comment, FAQ
 
 @admin.register(Tag)
 class TagAdmin(admin.ModelAdmin):
@@ -24,3 +24,11 @@ class CommentAdmin(admin.ModelAdmin):
     list_display = ['user', 'article', 'created_at']
     list_filter = ['created_at', 'user', 'article']
     search_fields = ['text', 'user__username']
+
+
+
+
+@admin.register(FAQ)
+class FAQAdmin(admin.ModelAdmin):
+    list_display = ('question', 'is_published')
+    list_editable = ('is_published',)

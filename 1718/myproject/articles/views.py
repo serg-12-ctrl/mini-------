@@ -16,6 +16,8 @@ from django.http import HttpResponse, FileResponse
 from django.http import HttpResponse, FileResponse 
 from django.shortcuts import render, redirect
 from .models import SiteStatistic
+from .models import FAQ
+
 
 def create_article_view(request):
     if request.method == 'POST':
@@ -230,9 +232,18 @@ def register(request):
 def rules(request):
     return render(request, 'articles/rules.html')
 
-def faq(request):
-    return render(request, 'articles/faq.html')
 
+
+
+def faq(request):
+    # Берем только те вопросы, у которых стоит галочка "Опубликовано"
+    questions = FAQ.objects.filter(is_published=True)
+    return render(request, 'articles/faq.html', {'questions': questions})
+
+def faq_detail(request, pk):
+    # Ищет вопрос по ID, если не находит — выдает ошибку 404 (Страница не найдена)
+    question = get_object_or_404(FAQ, pk=pk, is_published=True)
+    return render(request, 'articles/faq_detail.html', {'question': question})
 import csv
 from django.http import HttpResponse
 from django.contrib.auth.models import User # Пример: берем данные пользователей
