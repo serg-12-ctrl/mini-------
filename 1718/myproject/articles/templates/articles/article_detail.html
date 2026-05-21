@@ -10,7 +10,7 @@
                 Автор: {{ article.author.username }} | {{ article.pub_date|date:"d.m.Y H:i" }}
             </p>
 
-            <!-- Вывод изображения -->
+            <!-- Вывод изображения с правильным масштабированием -->
             {% if article.image %}
             <div class="mb-4 text-center">
                 <img src="{{ article.image.url }}" class="img-fluid rounded shadow-sm" alt="{{ article.title }}" 
@@ -71,30 +71,38 @@
     
     <!-- Правая колонка -->
     <div class="col-md-4">
-        <div class="card sticky-top" style="top: 20px;">
+        <div class="card sticky-top" style="top: 20px; border-radius: 15px;">
             <div class="card-body">
                 {% if user.is_authenticated %}
-                    <!-- 2. ИСПРАВЛЕНО: Используем переменную is_saved из view -->
+                    <!-- Кнопки сохранения с использованием эмодзи вместо отсутствующих иконок -->
                     {% if is_saved %}
-                        <a href="{% url 'unsave_article' article.pk %}" class="btn btn-danger w-100 mb-2">
-                            <i class="bi bi-bookmark-x"></i> Удалить из избранного
+                        <a href="{% url 'unsave_article' article.pk %}" class="btn btn-danger w-100 mb-2 rounded-pill shadow-sm">
+                            <span class="me-1">❌</span> Удалить из избранного
                         </a>
                     {% else %}
-                        <a href="{% url 'save_article' article.pk %}" class="btn btn-success w-100 mb-2">
-                            <i class="bi bi-bookmark-plus"></i> Сохранить статью
+                        <a href="{% url 'save_article' article.pk %}" class="btn btn-success w-100 mb-2 rounded-pill shadow-sm">
+                            <span class="me-1">📌</span> Сохранить статью
                         </a>
                     {% endif %}
                 {% else %}
-                    <a href="{% url 'login' %}" class="btn btn-outline-secondary w-100 mb-2">Войдите, чтобы сохранить</a>
+                    <a href="{% url 'login' %}" class="btn btn-outline-secondary w-100 mb-2 rounded-pill">Войдите, чтобы сохранить</a>
                 {% endif %}
                 
                 <hr>
-                <h6>Теги этой статьи:</h6>
-                {% for tag in article.tags.all %}
-                    <a href="{% url 'index' %}?q={{ tag.name }}" class="badge bg-light text-dark text-decoration-none border">{{ tag.name }}</a>
-                {% empty %}
-                    <small class="text-muted">Тегов нет</small>
-                {% endfor %}
+                <h6 class="text-secondary fw-bold small text-uppercase mb-2">🔖 Теги этой статьи:</h6>
+                <div class="d-flex flex-wrap gap-1">
+                    {% for tag in article.tags.all %}
+                        <a href="{% url 'index' %}?q={{ tag.name }}" 
+                           class="badge bg-light text-dark text-decoration-none border px-2 py-2"
+                           style="border-radius: 8px; font-size: 0.85rem; transition: background-color 0.2s;"
+                           onmouseover="this.style.backgroundColor='#e9ecef'" 
+                           onmouseout="this.style.backgroundColor='#f8f9fa'">
+                            #{{ tag.name }}
+                        </a>
+                    {% empty %}
+                        <small class="text-muted">Тегов нет</small>
+                    {% endfor %}
+                </div>
             </div>
         </div>
     </div>
