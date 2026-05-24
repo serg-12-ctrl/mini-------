@@ -18,6 +18,21 @@ from django.shortcuts import render, redirect
 from .models import SiteStatistic
 from .models import FAQ
 
+from .utils import create_csv_report
+
+@login_required # Опционально: только для авторизованных пользователей
+def generate_report_view(request):
+    # Создаем HTTP-ответ с правильным типом содержимого для CSV
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="asutp_news_report.csv"'
+    
+    # Генерируем данные прямо в этот ответ
+    create_csv_report(response_object=response)
+    
+    return response
+
+
+
 
 def create_article_view(request):
     if request.method == 'POST':
