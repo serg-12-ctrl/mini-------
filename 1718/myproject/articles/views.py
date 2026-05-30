@@ -20,6 +20,11 @@ from .models import FAQ
 
 from .utils import create_csv_report
 
+
+from django.contrib.auth.decorators import login_required
+from .models import Forum, Question
+from .forms import QuestionForm
+
 @login_required # Опционально: только для авторизованных пользователей
 def generate_report_view(request):
     # Создаем HTTP-ответ с правильным типом содержимого для CSV
@@ -371,3 +376,162 @@ def test_pdf_view(request):
     p.save()
     buffer.seek(0)
     return FileResponse(buffer, filename="test.pdf")
+
+
+
+# 1. Список всех форумов
+def forum_list(request):
+    forums = Forum.objects.all()
+    #return render(request, 'forum/forum_list.html', {'forums': forums})
+    return render(request, 'articles/forum_list.html', {'forums': forums})
+# 2. Страница конкретного форума со списком вопросов
+def forum_detail(request, forum_id):
+    forum = get_object_or_404(Forum, id=forum_id)
+    questions = forum.questions.all().order_by('-created_at')
+    #return render(request, 'forum/forum_detail.html', {'forum': forum, 'questions': questions})
+    
+    return render(request, 'articles/forum_detail.html', {'forum': forum, 'questions': questions})
+
+# 3. Создание нового вопроса (только для авторизованных)
+@login_required
+def create_question(request, forum_id):
+    forum = get_object_or_404(Forum, id=forum_id)
+    
+    if request.method == 'POST':
+        form = QuestionForm(request.POST)
+        if form.is_valid():
+            question = form.save(commit=False)
+            question.forum = forum       # Привязываем к текущему форуму
+            question.author = request.user # Привязываем к вошедшему пользователю
+            question.save()
+            return redirect('forum_detail', forum_id=forum.id)
+    else:
+        form = QuestionForm()
+        
+    return render(request, 'create_question.html', {'form': form, 'forum': forum})
+
+from .models import Answer
+from .forms import AnswerForm
+
+# Детали вопроса + добавление ответа на той же странице
+def question_detail(request, question_id):
+    question = get_object_or_404(Question, id=question_id)
+    answers = question.answers.all().order_by('created_at') # Старые ответы вверху
+    
+    if request.method == 'POST':
+        if not request.user.is_authenticated:
+            return redirect('login') # Или на вашу страницу авторизации
+            
+        form = AnswerForm(request.POST)
+        if form.is_valid():
+            answer = form.save(commit=False)
+            answer.question = question
+            answer.author = request.user
+            answer.save()
+            return redirect('articles/question_detail', question_id=question.id)
+    else:
+        form = AnswerForm()
+        
+    context = {
+        'question': question,
+        'answers': answers,
+        'form': form
+    }
+    #return render(request, 'forum/question_detail.html', context)
+    return render(request, 'question_detail.html', context)
+
+from django.core.exceptions import PermissionDenied
+
+# Редактирование вопроса
+@login_required
+def edit_question(request, question_id):
+    question = get_object_or_404(Question, id=question_id)
+    if question.author != request.user:
+        raise PermissionDenied  # Защита: чужой вопрос редактировать нельзя
+        
+    if request.method == 'POST':
+        form = QuestionForm(request.POST, instance=question)
+        if form.is_valid():
+            form.save()
+            return redirect('question_detail', question_id=question.id)
+    else:
+        form = QuestionForm(instance=question)
+    return render(request, 'edit_question.html', {'form': form, 'question': question})
+
+# Удаление вопроса
+@login_required
+def delete_question(request, question_id):
+    question = get_object_or_404(Question, id=question_id)
+    if question.author != request.user:
+        raise PermissionDenied
+        
+    forum_id = question.forum.id
+    if request.method == 'POST':
+        question.delete()
+        return redirect('forum_detail', forum_id=forum_id)
+    return render(request, 'forum/delete_confirm.html', {'object': question, 'back_url': redirect('question_detail', question_id=question.id).url})
+
+# Редактирование ответа
+@login_required
+def edit_answer(request, answer_id):
+    answer = get_object_or_404(Answer, id=answer_id)
+    if answer.author != request.user:
+        raise PermissionDenied
+        
+    if request.method == 'POST':
+        form = AnswerForm(request.POST, instance=answer)
+        if form.is_valid():
+            form.save()
+            return redirect('question_detail', question_id=answer.question.id)
+    else:
+        form = AnswerForm(instance=answer)
+    return render(request, 'edit_answer.html', {'form': form, 'answer': answer})
+
+# Удаление ответа
+@login_required
+def delete_answer(request, answer_id):
+    answer = get_object_or_404(Answer, id=answer_id)
+    if answer.author != request.user:
+        raise PermissionDenied
+        
+    question_id = answer.question.id
+    if request.method == 'POST':
+        answer.delete()
+        return redirect('question_detail', question_id=question_id)
+    return render(request, 'forum/delete_confirm.html', {'object': answer, 'back_url': redirect('question_detail', question_id=question_id).url})
+
+
+
+from django.contrib.auth.models import User
+from django.contrib import messages
+
+# Просмотр профиля (своих или чужих)
+def user_profile(request, username):
+    profile_user = get_object_or_404(User, username=username)
+    
+    # Получаем вопросы и ответы пользователя
+    user_questions = profile_user.question_set.all().order_by('-created_at')
+    user_answers = profile_user.answer_set.all().order_by('-created_at')
+    
+    context = {
+        'profile_user': profile_user,
+        'user_questions': user_questions,
+        'user_answers': user_answers,
+    }
+    return render(request, 'forum/profile.html', context)
+
+# Редактирование своего профиля
+@login_required
+def edit_profile(request):
+    if request.method == 'POST':
+        # Используем стандартные поля модели User
+        user = request.user
+        user.first_name = request.POST.get('first_name', '')
+        user.last_name = request.POST.get('last_name', '')
+        user.email = request.POST.get('email', '')
+        user.save()
+        
+        messages.success(request, 'Профиль успешно обновлен!')
+        return redirect('user_profile', username=user.username)
+        
+    return render(request, 'forum/edit_profile.html')

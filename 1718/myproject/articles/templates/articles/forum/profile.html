@@ -1,0 +1,46 @@
+<h1>Профиль пользователя: {{ profile_user.username }}</h1>
+<p><strong>Имя:</strong> {{ profile_user.first_name|default:"Не указано" }}</p>
+<p><strong>Фамилия:</strong> {{ profile_user.last_name|default:"Не указано" }}</p>
+<p><strong>Email:</strong> {{ profile_user.email|default:"Скрыт или не указан" }}</p>
+<p><strong>Дата регистрации:</strong> {{ profile_user.date_joined|date:"d.m.Y" }}</p>
+
+<!-- Если это профиль текущего вошедшего пользователя, показываем кнопку редактирования -->
+{% if profile_user == user %}
+    <p><a href="{% url 'edit_profile' %}" style="font-weight: bold; color: #007bff;">Редактировать профиль</a></p>
+{% endif %}
+
+<hr>
+
+<div style="display: flex; gap: 40px;">
+    <!-- Список вопросов пользователя -->
+    <div style="flex: 1;">
+        <h3>Вопросы пользователя ({{ user_questions.count }}):</h3>
+        <ul>
+        {% for question in user_questions %}
+            <li>
+                <a href="{% url 'question_detail' question.id %}">{{ question.title }}</a> 
+                <span style="color: #6c757d; font-size: 0.85em;">({{ question.created_at|date:"d.m.Y" }})</span>
+            </li>
+        {% empty %}
+            <li>Пользователь еще не задавал вопросов.</li>
+        {% endfor %}
+        </ul>
+    </div>
+
+    <!-- Список ответов пользователя -->
+    <div style="flex: 1;">
+        <h3>Ответы пользователя ({{ user_answers.count }}):</h3>
+        <ul>
+        {% for answer in user_answers %}
+            <li>
+                Ответ в теме: <a href="{% url 'question_detail' answer.question.id %}">{{ answer.question.title }}</a>
+                <p style="font-style: italic; color: #555; margin-top: 2px;">"{{ answer.content|truncatewords:10 }}"</p>
+            </li>
+        {% empty %}
+            <li>Пользователь еще не оставлял ответов.</li>
+        {% endfor %}
+        </ul>
+    </div>
+</div>
+
+<p style="margin-top: 30px;"><a href="{% url 'forum_list' %}">На главную форума</a></p>

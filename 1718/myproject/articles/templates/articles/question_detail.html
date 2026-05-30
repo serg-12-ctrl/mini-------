@@ -1,0 +1,63 @@
+<h1>{{ question.title }}</h1>
+<p>
+    Автор: <a href="{% url 'user_profile' question.author.username %}"><strong>{{ question.author.username }}</strong></a> 
+
+    | Дата: {{ question.created_at|date:"d.m.Y H:i" }}
+</p>
+<div style="background: #f9f9f9; padding: 15px; border-left: 4px solid #007bff;">
+    {{ question.content|linebreaks }}
+</div>
+
+<!-- Кнопки управления вопросом (только для автора) -->
+{% if question.author == user %}
+    <div style="margin-top: 10px;">
+        <a href="{% url 'edit_question' question.id %}" style="color: green; margin-right: 15px;">Редактировать вопрос</a>
+        <a href="{% url 'delete_question' question.id %}" style="color: red;">Удалить вопрос</a>
+    </div>
+{% endif %}
+
+<hr>
+
+<!-- Список ответов -->
+<h3>Ответы ({{ answers.count }}):</h3>
+<ul>
+{% for answer in answers %}
+    <li style="margin-bottom: 20px; list-style-type: none; border-bottom: 1px solid #eee; padding-bottom: 10px;">
+        <!-- Имя автора ответа ведет в его профиль -->
+        <a href="{% url 'user_profile' answer.author.username %}"><strong>{{ answer.author.username }}</strong></a> 
+        ({{ answer.created_at|date:"d.m.Y H:i" }})
+        
+        <p>{{ answer.content|linebreaks }}</p>
+        
+        <!-- Кнопки управления ответом (только для автора) -->
+        {% if answer.author == user %}
+            <div style="margin-top: 5px;">
+                <a href="{% url 'edit_answer' answer.id %}" style="color: green; font-size: 0.9em; margin-right: 15px;">Редактировать</a>
+                <a href="{% url 'delete_answer' answer.id %}" style="color: red; font-size: 0.9em;">Удалить</a>
+            </div>
+        {% endif %}
+    </li>
+{% empty %}
+    <li>К этому вопросу еще нет ответов. Будьте первым!</li>
+{% endfor %}
+</ul>
+
+<hr>
+
+<!-- Форма отправки ответа -->
+<h3>Ваш ответ:</h3>
+{% if user.is_authenticated %}
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Отправить ответ</button>
+    </form>
+{% else %}
+    <p>Чтобы оставить ответ, пожалуйста, <a href="/accounts/login/">войдите в аккаунт</a>.</p>
+{% endif %}
+
+<!-- В самом низу файла question_detail.html найдите и исправьте эту строку -->
+<p style="margin-top: 30px;">
+    <a href="{% url 'forum_detail' question.forum.id %}">Назад в форум</a>
+</p>
+

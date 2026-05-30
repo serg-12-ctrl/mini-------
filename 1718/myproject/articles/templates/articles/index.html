@@ -1,15 +1,18 @@
-{% extends 'base.html' %} 
-{% load static %} <!-- Подгружаем статику -->
+{% extends 'base.html' %}
 
 {% block content %}
-<!-- Подключаем  CSS -->
-
+<!-- Информационная плашка форума -->
+<div class="alert alert-info d-block shadow-sm" role="alert" style="margin-bottom: 20px;">
+    📢 <strong>Внимание!</strong> Открылся новый раздел сайта: 
+    <a href="{% url 'forum_list' %}" class="alert-link fw-bold text-decoration-underline">Перейти на ветку форумов АСУТП</a>
+</div>
 
 <div class="row">
   <div class="col-md-8">
     <div class="d-flex justify-content-between align-items-center mb-4">
       <h1 class="fw-bold">Новости АСУТП</h1>
       
+      <!-- Выпадающий список "Отчеты" -->
       <div class="dropdown">
         <button class="btn btn-success btn-lg dropdown-toggle shadow-sm" type="button" data-bs-toggle="dropdown">
           <i class="bi bi-file-earmark-bar-graph"></i> Отчеты
@@ -21,42 +24,45 @@
       </div>
     </div>
 
+    <!-- Список статей -->
     {% for article in page_obj %}
-    
     <div class="card mb-4 shadow-sm article-card">
-      <div class="d-flex p-3">
+      <div class="d-flex p-3 flex-column flex-sm-row">
         {% if article.image %}
-
-<div class="flex-shrink-0 me-3" style="width: 200px;">
-    <img src="{{ article.image.url }}" 
-         alt="{{ article.title }}" 
-         class="rounded shadow-sm"
-         style="max-height: 200px;width: 200px; object-fit: cover;" />
-</div>
-{% endif %}
+        <div class="flex-shrink-0 me-sm-3 mb-3 mb-sm-0 text-center" style="width: 200px; mx-auto;">
+            <img src="{{ article.image.url }}" 
+                 alt="{{ article.title }}" 
+                 class="rounded shadow-sm"
+                 style="height: 150px; width: 200px; object-fit: cover;" />
+        </div>
+        {% endif %}
         
-        <div class="card-body p-0">
+        <div class="card-body p-0 flex-grow-1">
           <div class="d-flex justify-content-between align-items-start">
             <h5 class="card-title">
               <a href="{% url 'article_detail' article.pk %}" class="text-decoration-none text-dark fw-bold">{{ article.title }}</a>
             </h5>
             {% if user.is_authenticated %} 
-    {% if article.id in saved_ids %}
-        <a href="{% url 'unsave_article' article.pk %}" class="text-danger" title="Удалить из избранного">
-            <i class="bi bi-bookmark-fill fs-4"></i>
-        </a>
-    {% else %}
-        <a href="{% url 'save_article' article.pk %}" class="text-primary" title="Добавить в избранное">
-            <i class="bi bi-bookmark fs-4"></i>
-        </a>
-    {% endif %} 
-{% endif %} 
+                {% if article.id in saved_ids %}
+                    <a href="{% url 'unsave_article' article.pk %}" class="text-danger" title="Удалить из избранного">
+                        <i class="bi bi-bookmark-fill fs-4"></i>
+                    </a>
+                {% else %}
+                    <a href="{% url 'save_article' article.pk %}" class="text-primary" title="Добавить в избранное">
+                        <i class="bi bi-bookmark fs-4"></i>
+                    </a>
+                {% endif %} 
+            {% endif %} 
           </div>
-          <p class="card-text text-secondary">{{ article.content|truncatewords:25 }}</p>
+          <p class="card-text text-secondary mt-2">{{ article.content|truncatewords:25 }}</p>
           <div class="d-flex justify-content-between align-items-center mt-3">
             <small class="text-muted"><i class="bi bi-person"></i> {{ article.author.username }} | {{ article.pub_date|date:"d.m.Y" }}</small>
             {% if article.tags.all %}
-              <div>{% for tag in article.tags.all %}<span class="badge bg-light text-dark border">{{ tag.name }}</span>{% endfor %}</div>
+              <div class="d-flex gap-1">
+                {% for tag in article.tags.all %}
+                  <span class="badge bg-light text-dark border">{{ tag.name }}</span>
+                {% endfor %}
+              </div>
             {% endif %}
           </div>
         </div>
@@ -81,7 +87,7 @@
     {% endif %}
   </div>
 
-  
+  <!-- Боковая панель -->
   <div class="col-md-4">
     <div class="card mb-4 shadow-sm sidebar-card">
       <div class="card-header bg-primary text-white sidebar-header"><h5><i class="bi bi-search"></i> Поиск</h5></div>
@@ -93,7 +99,6 @@
           </div>
         </form>
       </div>
-
     </div>
 
     <div class="card mb-4 shadow-sm sidebar-card">

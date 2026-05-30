@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="fw-bold">Разделы форума</h1>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        {% for forum in forums %}
+            <div class="card mb-3 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <!-- Чистый путь без articles: -->
+                        <a href="{% url 'forum_detail' forum.id %}" class="text-decoration-none text-dark fw-bold">
+                            💬 {{ forum.title }}
+                        </a>
+                    </h5>
+                    <p class="card-text text-secondary mb-0">{{ forum.description }}</p>
+                </div>
+            </div>
+        {% empty %}
+            <div class="alert alert-warning">Разделов форума пока нет.</div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

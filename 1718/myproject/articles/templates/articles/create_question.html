@@ -1,0 +1,10 @@
+<h1>Новый вопрос в форум: {{ forum.title }}</h1>
+
+<form method="post">
+    {% csrf_data %}
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Опубликовать вопрос</button>
+</form>
+
+<p><a href="{% url 'forum_detail' forum.id %}">Отмена</a></p>

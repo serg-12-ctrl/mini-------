@@ -1,0 +1,8 @@
+<h1>Вы уверены, что хотите удалить это?</h1>
+<p>Это действие нельзя будет отменить.</p>
+
+<form method="post">
+    {% csrf_token %}
+    <button type="submit" style="background-color: red; color: white; padding: 10px 20px; border: none; cursor: pointer;">Да, удалить</button>
+    <a href="{{ back_url }}" style="margin-left: 15px;">Отмена</a>
+</form>

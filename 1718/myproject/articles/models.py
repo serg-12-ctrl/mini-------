@@ -4,7 +4,26 @@ from django.urls import reverse
 from django.utils import timezone
 from PIL import Image 
 import os 
+from django.contrib.auth.models import User
 
+class Forum(models.Model):
+    title = models.CharField(max_length=200, verbose_name="Название форума")
+    description = models.TextField(verbose_name="Описание")
+
+    
+
+    def __str__(self):
+        return self.title
+
+class Question(models.Model):
+    forum = models.ForeignKey(Forum, on_delete=models.CASCADE, related_name='questions', verbose_name="Форум")
+    author = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="Автор")
+    title = models.CharField(max_length=250, verbose_name="Тема вопроса")
+    content = models.TextField(verbose_name="Текст вопроса")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата создания")
+
+    def __str__(self):
+        return self.title
 
 class FAQ(models.Model):
     question = models.CharField(max_length=255, verbose_name="Вопрос")
@@ -119,3 +138,12 @@ class SiteStatistic(models.Model):
         # Если пользователь есть, выводим его логин, иначе — "Гость"
         username = self.user.username if self.user else "Гость"
         return f"{username} — {self.action} ({self.timestamp})"        
+
+class Answer(models.Model):
+    question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name='answers', verbose_name="Вопрос")
+    author = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="Автор ответа")
+    content = models.TextField(verbose_name="Текст ответа")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата ответа")
+
+    def __str__(self):
+        return f"Ответ от {self.author.username} к теме {self.question.title}"

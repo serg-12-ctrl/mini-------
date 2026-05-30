@@ -1,0 +1,7 @@
+<h1>Редактирование ответа</h1>
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Сохранить изменения</button>
+</form>
+<p><a href="{% url 'question_detail' answer.question.id %}">Отмена</a></p>

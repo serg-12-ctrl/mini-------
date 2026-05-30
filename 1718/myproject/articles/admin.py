@@ -32,3 +32,11 @@ class CommentAdmin(admin.ModelAdmin):
 class FAQAdmin(admin.ModelAdmin):
     list_display = ('question', 'is_published')
     list_editable = ('is_published',)
+
+
+
+from .models import Forum, Question  # Импортируем ваши модели форума
+
+# Простая регистрация моделей
+admin.site.register(Forum)
+admin.site.register(Question)
