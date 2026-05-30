@@ -1,10 +1,33 @@
-<h1>Новый вопрос в форум: {{ forum.title }}</h1>
+{% extends 'base.html' %}
 
-<form method="post">
-    {% csrf_data %}
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Опубликовать вопрос</button>
-</form>
-
-<p><a href="{% url 'forum_detail' forum.id %}">Отмена</a></p>
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">Новый вопрос в раздел: {{ forum.title }}</h4>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    {% for field in form %}
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">{{ field.label }}</label>
+                            {{ field }}
+                            {% if field.help_text %}
+                                <div class="form-text">{{ field.help_text }}</div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                    
+                    <div class="mt-4">
+                        <button type="submit" class="btn btn-success">Опубликовать вопрос</button>
+                        <a href="{% url 'forum_detail' forum.id %}" class="btn btn-outline-secondary ms-2">Отмена</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

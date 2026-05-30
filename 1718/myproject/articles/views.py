@@ -408,7 +408,7 @@ def create_question(request, forum_id):
     else:
         form = QuestionForm()
         
-    return render(request, 'create_question.html', {'form': form, 'forum': forum})
+    return render(request, 'articles/create_question.html', {'form': form, 'forum': forum})
 
 from .models import Answer
 from .forms import AnswerForm
