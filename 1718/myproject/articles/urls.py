@@ -43,5 +43,6 @@ urlpatterns = [
     # --- Профили пользователей ---
     path('profile/edit/', views.edit_profile, name='edit_profile'),
     path('profile/<str:username>/', views.user_profile, name='user_profile'),
+    path('article/create/', views.article_create, name='article_create'),
 
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

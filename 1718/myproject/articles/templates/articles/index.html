@@ -12,15 +12,24 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
       <h1 class="fw-bold">Новости АСУТП</h1>
       
-      <!-- Выпадающий список "Отчеты" -->
-      <div class="dropdown">
-        <button class="btn btn-success btn-lg dropdown-toggle shadow-sm" type="button" data-bs-toggle="dropdown">
-          <i class="bi bi-file-earmark-bar-graph"></i> Отчеты
-        </button>
-        <ul class="dropdown-menu shadow border-0">
-          <li><a class="dropdown-item" href="{% url 'generate_report' %}"><i class="bi bi-file-earmark-spreadsheet"></i> Скачать CSV</a></li>
-          <li><a class="dropdown-item" href="{% url 'stats' %}"><i class="bi bi-pie-chart"></i> Статистика</a></li>
-        </ul>
+      <!-- Контейнер для кнопок управления -->
+      <div class="d-flex gap-2">
+        {% if request.user.is_superuser %}
+        <a href="{% url 'article_create' %}" class="btn btn-primary btn-lg shadow-sm fw-bold">
+          <i class="bi bi-pencil-square"></i> Добавить статью
+        </a>
+        {% endif %}
+
+        <!-- Выпадающий список "Отчеты" -->
+        <div class="dropdown">
+          <button class="btn btn-success btn-lg dropdown-toggle shadow-sm" type="button" data-bs-toggle="dropdown">
+            <i class="bi bi-file-earmark-bar-graph"></i> Отчеты
+          </button>
+          <ul class="dropdown-menu shadow border-0">
+            <li><a class="dropdown-item" href="{% url 'generate_report' %}"><i class="bi bi-file-earmark-spreadsheet"></i> Скачать CSV</a></li>
+            <li><a class="dropdown-item" href="{% url 'stats' %}"><i class="bi bi-pie-chart"></i> Статистика</a></li>
+          </ul>
+        </div>
       </div>
     </div>
 

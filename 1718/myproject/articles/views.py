@@ -254,9 +254,11 @@ def saved_articles(request) -> HttpResponse:
     return render(request, 'articles/saved_articles.html', {'saved_articles': saved_articles})
 
 
-@login_required
+from django.contrib.auth.decorators import user_passes_test # Добавьте импорт в самый верх файла
+
+@user_passes_test(lambda u: u.is_superuser) # Доступ только для admin (суперпользователей)
 def article_create(request) -> HttpResponse:
-    """Обеспечивает обработку формы публикации новой статьи.
+    """Обеспечивает обработку формы публикации новой статьи только для администраторов.
 
     Args:
         request (HttpRequest): Объект HTTP-запроса.
@@ -275,6 +277,7 @@ def article_create(request) -> HttpResponse:
     else:
         form = ArticleForm()
     return render(request, 'articles/article_form.html', {'form': form})
+
 def custom_login_view(request) -> HttpResponse:
     """Аутентифицирует пользователя на сайте на основе стандартной формы Django.
 
@@ -631,3 +634,16 @@ def get_article_meta(article_id: int) -> Optional[Dict[str, Any]]:
     except Article.DoesNotExist:
         return None
 
+
+
+def create_article_view(request: HttpRequest) -> HttpResponse:
+    if request.method == 'POST':
+        # ... код сохранения статьи (допустим, получили её новый id = 42) ...
+        
+        # ВЫЗОВ ФУНКЦИИ: получаем метаданные для записи в историю действий
+        meta = get_article_meta(article_id=42)
+        if meta:
+            SiteStatistic.objects.create(
+                user=request.user,
+                action=f"Опубликована статья: {meta['title']}"  # Используем данные из словаря
+            )

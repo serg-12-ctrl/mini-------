@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-8">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h3 class="card-title mb-0"><i class="bi bi-plus-circle"></i> Добавить новую статью по АСУТП</h3>
+            </div>
+            <div class="card-body p-4">
+                
+                <!-- Форма отправки данных -->
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label for="id_title" class="form-label fw-bold">Заголовок статьи</label>
+                        <input type="text" name="title" id="id_title" class="form-control" placeholder="Введите название статьи..." required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="id_content" class="form-label fw-bold">Содержимое (текст)</label>
+                        <textarea name="content" id="id_content" rows="8" class="form-control" placeholder="Напишите текст статьи..." required></textarea>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="id_image" class="form-label fw-bold">Изображение (необязательно)</label>
+                        <input type="file" name="image" id="id_image" class="form-control">
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'index' %}" class="btn btn-outline-secondary">Отмена</a>
+                        <button type="submit" class="btn btn-success fw-bold">Опубликовать статью</button>
+                    </div>
+                </form>
+
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
