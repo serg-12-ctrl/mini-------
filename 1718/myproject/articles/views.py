@@ -169,9 +169,17 @@ def article_list(request) -> HttpResponse:
     }
     return render(request, 'articles/articles_list.html', context)
 
-def article_detail(request, pk):
+def article_detail(request, pk: int) -> HttpResponse:
+    """Отображает полную статью, форму добавления и список комментариев.
+
+    Args:
+        request (HttpRequest): Объект HTTP-запроса.
+        pk (int): Первичный ключ статьи.
+
+    Returns:
+        HttpResponse: Страница детального просмотра статьи.
+    """
     article = get_object_or_404(Article, pk=pk)
-    # Используем select_related, чтобы не делать лишних запросов к БД для каждого автора комментария
     comments = Comment.objects.filter(article=article).select_related('user')
 
     if request.method == "POST":
@@ -188,7 +196,6 @@ def article_detail(request, pk):
     else:
         form = CommentForm()
 
-    
     is_saved = False
     if request.user.is_authenticated:
         is_saved = SavedArticle.objects.filter(user=request.user, article=article).exists()
@@ -201,68 +208,108 @@ def article_detail(request, pk):
     }
     return render(request, 'articles/article_detail.html', context)
 
-
 @login_required
-def save_article(request, pk):
+def save_article(request, pk: int) -> HttpResponseRedirect:
+    """Добавляет выбранную статью в список избранного пользователя.
+
+    Args:
+        request (HttpRequest): Объект HTTP-запроса.
+        pk (int): Первичный ключ сохраняемой статьи.
+
+    Returns:
+        HttpResponseRedirect: Перенаправление на исходную страницу.
+    """
     article = get_object_or_404(Article, pk=pk)
-    SavedArticle.objects.get_or_create(user = request.user, article = article)
+    SavedArticle.objects.get_or_create(user=request.user, article=article)
+    return HttpResponseRedirect(request.META.get('HTTP_REFERER', request.path))
 
-    return redirect('article_detail', pk=pk)
 
 @login_required
-def unsave_article(request, pk):
+def unsave_article(request, pk: int) -> HttpResponseRedirect:
+    """Удаляет выбранную статью из списка избранного пользователя.
+
+    Args:
+        request (HttpRequest): Объект HTTP-запроса.
+        pk (int): Первичный ключ удаляемой статьи.
+
+    Returns:
+        HttpResponseRedirect: Перенаправление на исходную страницу.
+    """
     article = get_object_or_404(Article, pk=pk)
     SavedArticle.objects.filter(user=request.user, article=article).delete()
-    
-    
-    return redirect(request.META.get('HTTP_REFERER', 'index'))
+    return HttpResponseRedirect(request.META.get('HTTP_REFERER', request.path))
 
 @login_required
-def saved_articles(request):
+def saved_articles(request) -> HttpResponse:
+    """Отображает персональный раздел пользователя со всеми сохраненными статьями.
+
+    Args:
+        request (HttpRequest): Объект HTTP-запроса.
+
+    Returns:
+        HttpResponse: Шаблон личного кабинета закладок.
+    """
     saved_articles = SavedArticle.objects.filter(user=request.user).select_related('article')
     return render(request, 'articles/saved_articles.html', {'saved_articles': saved_articles})
-def article_create(request):
+
+
+@login_required
+def article_create(request) -> HttpResponse:
+    """Обеспечивает обработку формы публикации новой статьи.
+
+    Args:
+        request (HttpRequest): Объект HTTP-запроса.
+
+    Returns:
+        HttpResponse: Страница формы создания статьи или редирект.
+    """
     if request.method == "POST":
-        
         form = ArticleForm(request.POST, request.FILES)
         if form.is_valid():
             article = form.save(commit=False)
-            article.author = request.user  # Привязываем автора
+            article.author = request.user
             article.save()
-            form.save_m2m()  # Сохраняем теги (многие-ко-многим)
+            form.save_m2m()
             return redirect('article_detail', pk=article.pk)
     else:
         form = ArticleForm()
-    
     return render(request, 'articles/article_form.html', {'form': form})
-def custom_login_view(request):
+def custom_login_view(request) -> HttpResponse:
+    """Аутентифицирует пользователя на сайте на основе стандартной формы Django.
+
+    Args:
+        request (HttpRequest): Объект HTTP-запроса.
+
+    Returns:
+        HttpResponse: Страница авторизации или редирект.
+    """
     if request.method == "POST":
         form = AuthenticationForm(request, data=request.POST)
         if form.is_valid():
-            username = form.cleaned_data.get('username')
-            password = form.cleaned_data.get('password')
             user = form.get_user()
             if user:
                 login(request, user)
                 return redirect('index')
     else:
         form = AuthenticationForm()
-
     return render(request, 'registration/register.html', {'form': form})
 
 
 
-def register(request):
+def register(request) -> HttpResponse:
+    """Регистрирует нового пользователя в системе и автоматически авторизует его.
+
+    Args:
+        request (HttpRequest): Объект HTTP-запроса.
+
+    Returns:
+        HttpResponse: Форма регистрации или редирект.
+    """
     if request.method == 'POST':
         form = UserCreationForm(request.POST)
         if form.is_valid():
             user = form.save()
             login(request, user)
-            return redirect('index')
-    else:
-        form = UserCreationForm() # Показываем пустую форму
-    
-    return render(request, 'articles/register.html', {'form': form}) # Рендерим страницу
 
 
 def rules(request):
