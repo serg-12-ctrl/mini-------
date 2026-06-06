@@ -256,15 +256,15 @@ def saved_articles(request) -> HttpResponse:
 
 from django.contrib.auth.decorators import user_passes_test # Добавьте импорт в самый верх файла
 
-@user_passes_test(lambda u: u.is_superuser) # Доступ только для admin (суперпользователей)
-def article_create(request) -> HttpResponse:
-    """Обеспечивает обработку формы публикации новой статьи только для администраторов.
+from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
+from typing import Union
 
-    Args:
-        request (HttpRequest): Объект HTTP-запроса.
-
+@user_passes_test(lambda u: u.is_superuser)
+def article_create(request: HttpRequest) -> Union[HttpResponse, HttpResponseRedirect]:
+    """Обрабатывает создание статьи.
+    
     Returns:
-        HttpResponse: Страница формы создания статьи или редирект.
+        Union[HttpResponse, HttpResponseRedirect]: HTML-страница или редирект.
     """
     if request.method == "POST":
         form = ArticleForm(request.POST, request.FILES)
@@ -273,10 +273,13 @@ def article_create(request) -> HttpResponse:
             article.author = request.user
             article.save()
             form.save_m2m()
-            return redirect('article_detail', pk=article.pk)
+            return redirect('article_detail', pk=article.pk) # Возвращает HttpResponseRedirect
+            
     else:
         form = ArticleForm()
-    return render(request, 'articles/article_form.html', {'form': form})
+        
+    return render(request, 'articles/article_form.html', {'form': form}) # Возвращает HttpResponse
+
 
 def custom_login_view(request) -> HttpResponse:
     """Аутентифицирует пользователя на сайте на основе стандартной формы Django.
