@@ -9,18 +9,26 @@
         {% for item in saved_articles %}
         <div class="col-12 mb-4"> <!-- Обертка для каждой карточки -->
             <div class="card shadow-sm h-100">
-                <div class="row g-0">
+                <div class="row g-0 align-items-center"> <!-- Добавлено выравнивание по центру по вертикали -->
+                    
                     <!-- Блок с картинкой -->
                     {% if item.article.image %}
                     <div class="col-md-3">
-                        <img src="{{ item.article.image.url }}"class="img-fluid rounded-start"alt="{{ item.article.title }}"style="max-height: 500px; width: 100%;  object-fill: cover; display: block;">
+                        <img src="{{ item.article.image.url }}" 
+                             class="img-fluid rounded-start" 
+                             alt="{{ item.article.title }}" 
+                             style="max-height: 220px; width: 100%; object-fit: cover; display: block;">
                     </div>
                     {% endif %}
                     
                     <!-- Блок с текстом -->
                     <div class="{% if item.article.image %}col-md-9{% else %}col-md-12{% endif %} d-flex flex-column">
                         <div class="card-body">
-                            <h5 class="card-title">{{ item.article.title }}</h5>
+                            <h5 class="card-title fw-bold">
+                                <a href="{% url 'article_detail' item.article.pk %}" class="text-decoration-none text-dark">
+                                    {{ item.article.title }}
+                                </a>
+                            </h5>
                             <p class="card-text text-muted">
                                 {{ item.article.content|truncatewords:30 }}
                             </p>
@@ -30,18 +38,20 @@
                         <div class="card-footer bg-transparent border-0 mt-auto d-flex justify-content-between align-items-center">
                             <small class="text-muted">Сохранено: {{ item.saved_at|date:"d.m.Y" }}</small>
                             <div>
-                                <a href="{% url 'article_detail' item.article.pk %}" class="btn btn-sm btn-primary">Читать</a>
+                                <a href="{% url 'article_detail' item.article.pk %}" class="btn btn-sm btn-primary shadow-sm">Читать</a>
                                 <a href="{% url 'unsave_article' item.article.pk %}" class="btn btn-sm btn-outline-danger ms-2">Удалить</a>
                             </div>
                         </div>
                     </div>
+
                 </div>
             </div>
         </div>
         {% empty %}
         <div class="col-12 text-center py-5">
-            <p class="fs-5 text-muted">У вас пока нет сохранённых статей.</p>
-            <a href="{% url 'index' %}" class="btn btn-primary">Найти что-нибудь интересное</a>
+            <i class="bi bi-bookmark-x text-muted" style="font-size: 3rem;"></i>
+            <p class="fs-5 text-muted mt-3">У вас пока нет сохранённых статей.</p>
+            <a href="{% url 'index' %}" class="btn btn-primary shadow-sm">Найти что-нибудь интересное</a>
         </div>
         {% endfor %}
     </div>

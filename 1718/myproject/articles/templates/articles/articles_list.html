@@ -23,11 +23,21 @@
     <hr>
 
     <ul>
-       
         {% for article in page_obj %}
             <li>
                 <strong>{{ article.title }}</strong> — {{ article.author.username }} 
                 ({{ article.pub_date|date:"d.m.Y" }})
+                
+                <!-- БЛОК ИЗБРАННОГО -->
+                {% if request.user.is_authenticated %}
+                    <span style="margin-left: 15px;">
+                        {% if article.id in saved_ids %}
+                            <a href="{% url 'unsave_article' article.id %}" title="Удалить из избранного" style="text-decoration: none;">❤️</a>
+                        {% else %}
+                            <a href="{% url 'save_article' article.id %}" title="Добавить в избранное" style="text-decoration: none;">🤍</a>
+                        {% endif %}
+                    </span>
+                {% endif %}
             </li>
         {% empty %}
             <li>Статей пока нет.</li>

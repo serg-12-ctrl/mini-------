@@ -89,23 +89,43 @@
 
   <!-- Боковая панель -->
   <div class="col-md-4">
+    
+    <!-- ДОБАВЛЕНО: Кнопка быстрого перехода в избранное -->
+    {% if request.user.is_authenticated %}
+    <div class="card mb-4 shadow-sm sidebar-card border-danger">
+      <div class="card-header bg-danger text-white sidebar-header">
+        <h5><i class="bi bi-heart-fill"></i> Личный кабинет</h5>
+      </div>
+      <div class="card-body text-center">
+        <p class="card-text text-secondary mb-3">
+          У вас сохранено статей: <strong class="text-danger">{{ saved_count|default:0 }}</strong>
+        </p>
+        <a href="{% url 'saved_articles' %}" class="btn btn-outline-danger w-100 shadow-sm fw-bold">
+          <i class="bi bi-bookmarks"></i> Перейти в избранное
+        </a>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Поиск -->
     <div class="card mb-4 shadow-sm sidebar-card">
       <div class="card-header bg-primary text-white sidebar-header"><h5><i class="bi bi-search"></i> Поиск</h5></div>
       <div class="card-body">
         <form method="get" action="{% url 'index' %}">
           <div class="input-group">
-            <input type="text" name="q" value="{{ query }}" class="form-control border-end-0" placeholder="Найти..." />
+            <input type="text" name="q" value="{{ query|default:'' }}" class="form-control border-end-0" placeholder="Найти..." />
             <button type="submit" class="btn btn-primary border-start-0"><i class="bi bi-search"></i></button>
           </div>
         </form>
       </div>
     </div>
 
+    <!-- Сортировка -->
     <div class="card mb-4 shadow-sm sidebar-card">
       <div class="card-header bg-white sidebar-header"><h5><i class="bi bi-filter"></i> Сортировка</h5></div>
       <div class="card-body d-flex flex-wrap gap-2">
-        <a href="?sort=date&q={{ query }}" class="btn btn-sm {% if current_sort == 'date' %}btn-primary{% else %}btn-outline-primary{% endif %} rounded-pill">По дате</a>
-        <a href="?sort=author&q={{ query }}" class="btn btn-sm {% if current_sort == 'author' %}btn-primary{% else %}btn-outline-primary{% endif %} rounded-pill">По автору</a>
+        <a href="?sort=date&q={{ query|default:'' }}" class="btn btn-sm {% if current_sort == 'date' %}btn-primary{% else %}btn-outline-primary{% endif %} rounded-pill">По дате</a>
+        <a href="?sort=author&q={{ query|default:'' }}" class="btn btn-sm {% if current_sort == 'author' %}btn-primary{% else %}btn-outline-primary{% endif %} rounded-pill">По автору</a>
         <a href="?sort=title&q={{ query|default:'' }}" class="btn btn-sm {% if current_sort == 'title' %}btn-primary{% else %}btn-outline-primary{% endif %} rounded-pill">По названию</a>
         <a href="?sort=tags&q={{ query|default:'' }}" class="btn btn-sm {% if current_sort == 'tags' %}btn-primary{% else %}btn-outline-primary{% endif %} rounded-pill">По тегам</a>
       </div>

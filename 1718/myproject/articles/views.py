@@ -25,6 +25,11 @@ from django.contrib.auth.decorators import login_required
 from .models import Forum, Question
 from .forms import QuestionForm
 
+
+
+from django.http import HttpResponseRedirect 
+
+
 @login_required # Опционально: только для авторизованных пользователей
 def generate_report_view(request):
     # Создаем HTTP-ответ с правильным типом содержимого для CSV
@@ -108,50 +113,75 @@ def index(request):
 def article_list(request):
     articles = Article.objects.filter(is_public=True).select_related('author')
 
-    # Поиск
-    
+    # 1. Получаем ID сохраненных статей
+    saved_ids = []
+    if request.user.is_authenticated:
+        saved_ids = SavedArticle.objects.filter(user=request.user).values_list('article_id', flat=True)
 
-    
+    # Поиск
     query = request.GET.get('q', '').strip()
     if query:
-     try:
-            
-        search_date = datetime.strptime(query, "%d.%m.%Y").date()
-        articles = articles.filter(pub_date__date=search_date)
-     except ValueError:
-        articles = articles.filter(
-            Q(title__icontains=query) | 
-            Q(content__icontains=query) |
-            Q(author__username__icontains=query)
-        )
+        try:
+            search_date = datetime.strptime(query, "%d.%m.%Y").date()
+            articles = articles.filter(pub_date__date=search_date)
+        except ValueError:
+            articles = articles.filter(
+                Q(title__icontains=query) | 
+                Q(content__icontains=query) |
+                Q(author__username__icontains=query)
+            )
 
-    
+    # Сортировка
     sort_by = request.GET.get('sort', 'date')
-    
     if sort_by == 'author':
-        
         articles = articles.order_by(Lower('author__username'), '-pub_date')
     elif sort_by == 'title':
         articles = articles.order_by(Lower('title'))
     elif sort_by == 'tags':
         articles = articles.order_by('tags__name').distinct()
     else:
-        # По умолчанию — самые новые
         articles = articles.order_by('-pub_date')  
 
-    #Пагинация
-
+    # Пагинация
     paginator = Paginator(articles, 10)
     page_number = request.GET.get('page')
-    page_obj  = paginator.get_page(page_number)
+    page_obj = paginator.get_page(page_number)
 
+    # ИСПРАВЛЕНО: Теперь saved_ids передается в HTML-шаблон
     context = {
-        'page_obj':page_obj,
-        'query':query,
-        'current_sort':sort_by
+        'page_obj': page_obj,
+        'saved_ids': saved_ids,  # <- ЭТОЙ СТРОКИ НЕ ХВАТАЛО
+        'query': query,
+        'current_sort': sort_by
     }
 
-    return render (request, 'articles/articles_list.html', context)
+    return render(request, 'articles/articles_list.html', context)
+
+
+
+
+# Добавьте этот импорт в самый верх views.py к остальным http-импортам
+from django.http import HttpResponse, FileResponse, HttpResponseRedirect 
+
+@login_required
+def save_article(request, pk):
+    article = get_object_or_404(Article, pk=pk)
+    SavedArticle.objects.get_or_create(user=request.user, article=article)
+    
+    # Железобетонный возврат: берет URL страницы, откуда кликнули, 
+    # а если его нет — перезагружает текущий путь. Контекст главной страницы не теряется.
+    return HttpResponseRedirect(request.META.get('HTTP_REFERER', request.path))
+
+@login_required
+def unsave_article(request, pk):
+    article = get_object_or_404(Article, pk=pk)
+    SavedArticle.objects.filter(user=request.user, article=article).delete()
+    
+    # Железобетонный возврат на исходную страницу
+    return HttpResponseRedirect(request.META.get('HTTP_REFERER', request.path))
+
+
+
 
 def article_detail(request, pk):
     article = get_object_or_404(Article, pk=pk)
@@ -186,20 +216,7 @@ def article_detail(request, pk):
     return render(request, 'articles/article_detail.html', context)
 
 
-@login_required
-def save_article(request, pk):
-    article = get_object_or_404(Article, pk=pk)
-    SavedArticle.objects.get_or_create(user = request.user, article = article)
 
-    return redirect('article_detail', pk=pk)
-
-@login_required
-def unsave_article(request, pk):
-    article = get_object_or_404(Article, pk=pk)
-    SavedArticle.objects.filter(user=request.user, article=article).delete()
-    
-    
-    return redirect(request.META.get('HTTP_REFERER', 'index'))
 
 @login_required
 def saved_articles(request):
