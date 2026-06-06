@@ -10,7 +10,9 @@ from .models import Article, Tag, SavedArticle, Comment
 from .forms import CommentForm
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from .forms import CommentForm, ArticleForm  
-from django.http import HttpResponse, FileResponse
+#from django.http import HttpResponse, FileResponse
+from django.http import HttpResponse, FileResponse, HttpResponseRedirect
+
 #from .reports import generate_pdf_buffer  
 
 from django.http import HttpResponse, FileResponse 
@@ -118,53 +120,54 @@ def index(request) -> HttpResponse:
     return render(request, 'articles/index.html', context)
 
 
-def article_list(request):
+def article_list(request) -> HttpResponse:
+    """Выводит расширенный каталог статей с поддержкой фильтрации и закладок.
+
+    Args:
+        request (HttpRequest): Объект HTTP-запроса.
+
+    Returns:
+        HttpResponse: Отрендеренный шаблон каталога статей.
+    """
     articles = Article.objects.filter(is_public=True).select_related('author')
 
-    # Поиск
-    
+    saved_ids = []
+    if request.user.is_authenticated:
+        saved_ids = SavedArticle.objects.filter(user=request.user).values_list('article_id', flat=True)
 
-    
     query = request.GET.get('q', '').strip()
     if query:
-     try:
-            
-        search_date = datetime.strptime(query, "%d.%m.%Y").date()
-        articles = articles.filter(pub_date__date=search_date)
-     except ValueError:
-        articles = articles.filter(
-            Q(title__icontains=query) | 
-            Q(content__icontains=query) |
-            Q(author__username__icontains=query)
-        )
+        try:
+            search_date = datetime.strptime(query, "%d.%m.%Y").date()
+            articles = articles.filter(pub_date__date=search_date)
+        except ValueError:
+            articles = articles.filter(
+                Q(title__icontains=query) | 
+                Q(content__icontains=query) |
+                Q(author__username__icontains=query)
+            )
 
-    
     sort_by = request.GET.get('sort', 'date')
-    
     if sort_by == 'author':
-        
         articles = articles.order_by(Lower('author__username'), '-pub_date')
     elif sort_by == 'title':
         articles = articles.order_by(Lower('title'))
     elif sort_by == 'tags':
         articles = articles.order_by('tags__name').distinct()
     else:
-        
         articles = articles.order_by('-pub_date')  
-
-    #Пагинация
 
     paginator = Paginator(articles, 10)
     page_number = request.GET.get('page')
-    page_obj  = paginator.get_page(page_number)
+    page_obj = paginator.get_page(page_number)
 
     context = {
-        'page_obj':page_obj,
-        'query':query,
-        'current_sort':sort_by
+        'page_obj': page_obj,
+        'saved_ids': saved_ids,
+        'query': query,
+        'current_sort': sort_by
     }
-
-    return render (request, 'articles/articles_list.html', context)
+    return render(request, 'articles/articles_list.html', context)
 
 def article_detail(request, pk):
     article = get_object_or_404(Article, pk=pk)
