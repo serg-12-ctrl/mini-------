@@ -63,18 +63,23 @@ def create_article_view(request) -> HttpResponse:
 
 
 
-def index(request):
-    # 1. Базовый набор статей
+def index(request) -> HttpResponse:
+    """Формирует главную страницу со списком публичных статей, поиском, сортировкой и пагинацией.
+
+    Args:
+        request (HttpRequest): Объект HTTP-запроса.
+
+    Returns:
+        HttpResponse: Отреднеренный шаблон главной страницы с контекстом.
+    """
     articles = Article.objects.filter(is_public=True).select_related('author')
 
-    # --- НОВОЕ: Логика ИЗБРАННОГО для главной страницы ---
     saved_ids = []
+    saved_count = 0
     if request.user.is_authenticated:
-        # Получаем только ID статей, сохраненных этим пользователем
         saved_ids = SavedArticle.objects.filter(user=request.user).values_list('article_id', flat=True)
-    # -----------------------------------------------------
+        saved_count = len(saved_ids)
 
-    # 2. Логика ПОИСКА (без изменений)
     query = request.GET.get('q', '').strip()
     if query:
         try:
@@ -87,7 +92,6 @@ def index(request):
                 Q(author__username__icontains=query)
             ).distinct()
 
-    # 3. Логика СОРТИРОВКИ 
     sort_by = request.GET.get('sort', 'date')
     if sort_by == 'author':
         articles = articles.order_by(Lower('author__username'), '-pub_date')
@@ -98,14 +102,14 @@ def index(request):
     else:
         articles = articles.order_by('-pub_date')
 
-    # 4. ПАГИНАЦИЯ 
     paginator = Paginator(articles, 10)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
     context = {
         'page_obj': page_obj,
-        'saved_ids': saved_ids,  # ДОБАВЛЕНО В КОНТЕКСТ
+        'saved_ids': saved_ids,
+        'saved_count': saved_count,
         'query': query,
         'current_sort': sort_by,
         'login_form': AuthenticationForm(),
