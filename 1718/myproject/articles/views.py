@@ -26,6 +26,7 @@ from .utils import create_csv_report
 from django.contrib.auth.decorators import login_required
 from .models import Forum, Question
 from .forms import QuestionForm
+from typing import Union
 
 @login_required
 def generate_report_view(request) -> HttpResponse:
@@ -598,3 +599,35 @@ def edit_profile(request):
         return redirect('user_profile', username=user.username)
         
     return render(request, 'forum/edit_profile.html')
+from typing import List, Dict, Any, Optional
+
+def format_tags(tags_queryset: Any) -> List[str]:
+    """Преобразует QuerySet тегов в простой список строк.
+    
+    Args:
+        tags_queryset: Данные из базы данных.
+        
+    Returns:
+        List[str]: Список названий тегов.
+    """
+    return [tag.name for tag in tags_queryset]
+
+def get_article_meta(article_id: int) -> Optional[Dict[str, Any]]:
+    """Получает метаданные статьи в виде словаря, если статья существует.
+    
+    Args:
+        article_id (int): Идентификатор статьи.
+        
+    Returns:
+        Optional[Dict[str, Any]]: Словарь с данными или None, если статья не найдена.
+    """
+    try:
+        article = Article.objects.get(id=article_id)
+        return {
+            "title": article.title,
+            "views": 100,  # Пример статики
+            "is_public": article.is_public
+        }
+    except Article.DoesNotExist:
+        return None
+
