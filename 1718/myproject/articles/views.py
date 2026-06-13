@@ -317,6 +317,13 @@ def register(request) -> HttpResponse:
         if form.is_valid():
             user = form.save()
             login(request, user)
+            return redirect('index') 
+        # Если форма заполнена с ошибками, код пойдет дальше вниз к рендерингу формы с ошибками
+    else:
+        form = UserCreationForm() # ДОБАВЛЕНО: Создание пустой формы при GET-запросе
+    
+    
+    return render(request, 'registration/register.html', {'form': form})
 
 
 def rules(request):
