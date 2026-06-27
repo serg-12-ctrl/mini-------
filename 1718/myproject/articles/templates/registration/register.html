@@ -1,16 +1,84 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="row justify-content-center">
+<div class="row justify-content-center mt-4">
     <div class="col-md-6">
         <div class="card shadow-sm p-4">
-            <h2 class="text-center">Регистрация</h2>
-            <form method="post">
+            <h2 class="text-center mb-4">Регистрация</h2>
+
+            <!-- Добавили класс needs-validation и атрибут novalidate, чтобы стилизовать ошибки через Bootstrap -->
+            <form method="post" class="needs-validation" novalidate>
                 {% csrf_token %}
-                {{ form.as_p }}
-                <button type="submit" class="btn btn-success w-100">Зарегистрироваться</button>
+                
+                {% for field in form %}
+                    <div class="mb-3 position-relative">
+                        <label class="form-label fw-bold">{{ field.label }}</label>
+                        {{ field }}
+                        <!-- Блок, который Bootstrap покажет, если HTML5/JS валидация не пройдена -->
+                        <div class="invalid-feedback">
+                            Пожалуйста, заполните это поле корректно.
+                        </div>
+                    </div>
+                {% endfor %}
+                
+                <button type="submit" class="btn btn-success w-100 mt-2">Зарегистрироваться</button>
             </form>
         </div>
     </div>
 </div>
+
+<!-- JavaScript для перехвата отправки формы и применения стилей Bootstrap -->
+<script>
+(() => {
+  'use strict'
+  const forms = document.querySelectorAll('.needs-validation')
+
+  Array.from(forms).forEach(form => {
+    form.addEventListener('submit', event => {
+      const p1 = document.getElementById('id_password1')
+      const p2 = document.getElementById('id_password2')
+      const emailInput = document.getElementById('id_email') // Находим поле email по его ID
+
+      // Сброс ошибок
+      p1.setCustomValidity('')
+      p2.setCustomValidity('')
+      if (emailInput) emailInput.setCustomValidity('')
+
+      // 1. Проверка валидности email силами браузера
+      if (emailInput && !emailInput.validity.valid) {
+        const fbEmail = emailInput.parentElement.querySelector('.invalid-feedback')
+        if (fbEmail) fbEmail.textContent = '⚠️ Введите корректный адрес почты (например, user@mail.ru)!'
+      }
+
+      // 2. Проверка длины пароля
+      if (p1.value.length < 8) {
+        p1.setCustomValidity('Короткий пароль')
+        const fb1 = p1.parentElement.querySelector('.invalid-feedback')
+        if (fb1) fb1.textContent = '⚠️ Пароль должен быть не менее 8 символов!'
+      } 
+      // 3. Проверка сложности пароля
+      else if (!/(?=.*\d)(?=.*[A-ZА-ЯёЁ])/.test(p1.value)) {
+        p1.setCustomValidity('Слишком простой пароль')
+        const fb1 = p1.parentElement.querySelector('.invalid-feedback')
+        if (fb1) fb1.textContent = '⚠️ Пароль должен содержать цифру и заглавную букву!'
+      }
+
+      // 4. Проверка совпадения паролей
+      if (p1.value !== p2.value) {
+        p2.setCustomValidity('Пароли не совпадают')
+        const fb2 = p2.parentElement.querySelector('.invalid-feedback')
+        if (fb2) fb2.textContent = '⚠️ Введенные пароли не совпадают!'
+      }
+
+      if (!form.checkValidity()) {
+        event.preventDefault()
+        event.stopPropagation()
+      }
+      
+      form.classList.add('was-validated')
+    }, false)
+  })
+})()
+</script>
+
 {% endblock %}

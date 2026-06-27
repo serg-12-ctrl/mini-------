@@ -27,6 +27,8 @@ from django.contrib.auth.decorators import login_required
 from .models import Forum, Question
 from .forms import QuestionForm
 from typing import Union
+from .forms import CyrillicUserCreationForm
+
 
 @login_required
 def generate_report_view(request) -> HttpResponse:
@@ -304,27 +306,18 @@ def custom_login_view(request) -> HttpResponse:
 
 
 def register(request) -> HttpResponse:
-    """Регистрирует нового пользователя в системе и автоматически авторизует его.
-
-    Args:
-        request (HttpRequest): Объект HTTP-запроса.
-
-    Returns:
-        HttpResponse: Форма регистрации или редирект.
-    """
+    """Регистрирует нового пользователя в системе и автоматически авторизует его."""
     if request.method == 'POST':
-        form = UserCreationForm(request.POST)
+        # Используем именно CyrillicUserCreationForm для применения регулярного выражения
+        form = CyrillicUserCreationForm(request.POST)
         if form.is_valid():
             user = form.save()
             login(request, user)
             return redirect('index') 
-        # Если форма заполнена с ошибками, код пойдет дальше вниз к рендерингу формы с ошибками
     else:
-        form = UserCreationForm() # ДОБАВЛЕНО: Создание пустой формы при GET-запросе
-    
+        form = CyrillicUserCreationForm()
     
     return render(request, 'registration/register.html', {'form': form})
-
 
 def rules(request):
     return render(request, 'articles/rules.html')
