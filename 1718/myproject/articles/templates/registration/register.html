@@ -6,27 +6,77 @@
         <div class="card shadow-sm p-4">
             <h2 class="text-center mb-4">Регистрация</h2>
 
-            <!-- Добавили класс needs-validation и атрибут novalidate, чтобы стилизовать ошибки через Bootstrap -->
-            <form method="post" class="needs-validation" novalidate>
-                {% csrf_token %}
-                
-                {% for field in form %}
-                    <div class="mb-3 position-relative">
-                        <label class="form-label fw-bold">{{ field.label }}</label>
-                        {{ field }}
-                        <!-- Блок, который Bootstrap покажет, если HTML5/JS валидация не пройдена -->
-                        <div class="invalid-feedback">
-                            Пожалуйста, заполните это поле корректно.
-                        </div>
-                    </div>
-                {% endfor %}
-                
-                <button type="submit" class="btn btn-success w-100 mt-2">Зарегистрироваться</button>
-            </form>
+            <!-- Если Django вернул глобальные ошибки, выведем их сверху -->
+            {% if form.non_field_errors %}
+                <div class="alert alert-danger shadow-sm">
+                    {{ form.non_field_errors }}
+                </div>
+            {% endif %}
+
+            <form method="post">
+    {% csrf_token %}
+    
+    <!-- Вывод глобальных ошибок -->
+    {% if form.non_field_errors %}
+        <div style="color: red; background: #fee; padding: 10px; margin-bottom: 15px; border: 1px solid red;">
+            {{ form.non_field_errors }}
+        </div>
+    {% endif %}
+    
+    <!-- Цикл вывода полей -->
+    {% for field in form %}
+        <div style="margin-bottom: 15px;">
+            <label style="display: block; font-weight: bold; margin-bottom: 5px;">{{ field.label }}</label>
+            {{ field }}
+            
+            <!-- Вывод конкретной ошибки под полем -->
+            {% if field.errors %}
+                <div style="color: red; font-size: 14px; margin-top: 5px;">
+                    {{ field.errors }}
+                </div>
+            {% endif %}
+        </div>
+    {% endfor %}
+    
+    <button type="submit" class="btn btn-success w-100 mt-2">Зарегистрироваться</button>
+</form>
+
         </div>
     </div>
 </div>
 
+<!-- Стили для мгновенного отображения ошибок, если JS заблокировал отправку -->
+<style>
+    .was-validated .form-control:invalid ~ .invalid-feedback,
+    .was-validated .form-select:invalid ~ .invalid-feedback {
+        display: block !important;
+    }
+    /* Стилизация полей ввода для интеграции с Bootstrap */
+    input[type="text"], input[type="password"], input[type="email"] {
+        display: block;
+        width: 100%;
+        padding: 0.375rem 0.75rem;
+        font-size: 1rem;
+        font-weight: 400;
+        line-height: 1.5;
+        color: #212529;
+        background-color: #fff;
+        background-clip: padding-box;
+        border: 1px solid #ced4da;
+        border-radius: 0.375rem;
+        transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+    }
+    .was-validated input:invalid {
+        border-color: #dc3545;
+        padding-right: calc(1.5em + 0.75rem);
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://w3.org' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3ccircle cx='6' cy='6' r='4.5' stroke-width='1'/%3e%3cpath stroke-width='1.2' d='M6 3v4M6 9h.01'/%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right calc(0.375em + 0.1875rem) center;
+        background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+    }
+</style>
+
+<!-- Исправленный JavaScript для перехвата отправки формы -->
 <!-- JavaScript для перехвата отправки формы и применения стилей Bootstrap -->
 <script>
 (() => {
@@ -35,11 +85,15 @@
 
   Array.from(forms).forEach(form => {
     form.addEventListener('submit', event => {
-      const p1 = document.getElementById('id_password1')
-      const p2 = document.getElementById('id_password2')
-      const emailInput = document.getElementById('id_email') // Находим поле email по его ID
+      // ИСПРАВЛЕНО: ищем поля по имени (name), как их генерирует Django
+      const p1 = document.querySelector('input[name="password1"]')
+      const p2 = document.querySelector('input[name="password2"]')
+      const emailInput = document.querySelector('input[type="email"]')
 
-      // Сброс ошибок
+      // Если поля на странице не найдены, не ломаем логику
+      if (!p1 || !p2) return;
+
+      // Сброс ошибок перед новой проверкой
       p1.setCustomValidity('')
       p2.setCustomValidity('')
       if (emailInput) emailInput.setCustomValidity('')
@@ -47,29 +101,42 @@
       // 1. Проверка валидности email силами браузера
       if (emailInput && !emailInput.validity.valid) {
         const fbEmail = emailInput.parentElement.querySelector('.invalid-feedback')
-        if (fbEmail) fbEmail.textContent = '⚠️ Введите корректный адрес почты (например, user@mail.ru)!'
+        if (fbEmail) {
+            fbEmail.textContent = '⚠️ Введите корректный адрес почты (например, user@mail.ru)!'
+            fbEmail.style.display = 'block'; // Принудительно показываем ошибку
+        }
       }
 
       // 2. Проверка длины пароля
       if (p1.value.length < 8) {
         p1.setCustomValidity('Короткий пароль')
         const fb1 = p1.parentElement.querySelector('.invalid-feedback')
-        if (fb1) fb1.textContent = '⚠️ Пароль должен быть не менее 8 символов!'
+        if (fb1) {
+            fb1.textContent = '⚠️ Пароль должен быть не менее 8 символов!'
+            fb1.style.display = 'block';
+        }
       } 
       // 3. Проверка сложности пароля
       else if (!/(?=.*\d)(?=.*[A-ZА-ЯёЁ])/.test(p1.value)) {
         p1.setCustomValidity('Слишком простой пароль')
         const fb1 = p1.parentElement.querySelector('.invalid-feedback')
-        if (fb1) fb1.textContent = '⚠️ Пароль должен содержать цифру и заглавную букву!'
+        if (fb1) {
+            fb1.textContent = '⚠️ Пароль должен содержать цифру и заглавную букву!'
+            fb1.style.display = 'block';
+        }
       }
 
       // 4. Проверка совпадения паролей
       if (p1.value !== p2.value) {
         p2.setCustomValidity('Пароли не совпадают')
         const fb2 = p2.parentElement.querySelector('.invalid-feedback')
-        if (fb2) fb2.textContent = '⚠️ Введенные пароли не совпадают!'
+        if (fb2) {
+            fb2.textContent = '⚠️ Введенные пароли не совпадают!'
+            fb2.style.display = 'block';
+        }
       }
 
+      // Если хотя бы одна проверка не пройдена — блокируем отправку
       if (!form.checkValidity()) {
         event.preventDefault()
         event.stopPropagation()

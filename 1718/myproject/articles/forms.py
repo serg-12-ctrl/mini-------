@@ -19,10 +19,11 @@ class CyrillicUserCreationForm(forms.ModelForm):
         widget=forms.TextInput(attrs={
             'class': 'form-control', 
             'placeholder': 'Имя пользователя',
-            'required': 'required', # HTML5 обязательное поле
-            # Регулярное выражение для HTML5 (разрешаем латиницу и кириллицу от 3 до 20 символов)
+            'required': 'required',
             'pattern': '^[a-zA-Z0-9_а-яА-ЯёЁ]{3,20}$',
-            'title': 'От 3 до 20 символов. Разрешены только русские/английские буквы, цифры и _'
+            'title': 'От 3 до 20 символов. Разрешены только русские/английские буквы, цифры и _',
+            # ДОБАВЛЕНО: Говорим браузеру, что это имя пользователя
+            'autocomplete': 'username', 
         })
     )
     email = forms.EmailField(
@@ -30,7 +31,9 @@ class CyrillicUserCreationForm(forms.ModelForm):
         widget=forms.EmailInput(attrs={
             'class': 'form-control', 
             'placeholder': 'example@domain.com',
-            'required': 'required' # Делает поле обязательным на фронтенде
+            'required': 'required',
+            # ДОБАВЛЕНО: Подсказка для автозаполнения почты
+            'autocomplete': 'email', 
         }),
         error_messages={
             'invalid': 'Пожалуйста, введите корректный адрес электронной почты.',
@@ -43,19 +46,24 @@ class CyrillicUserCreationForm(forms.ModelForm):
         widget=forms.PasswordInput(attrs={
             'class': 'form-control', 
             'placeholder': 'Введите пароль',
-            'required': 'required'
+            'required': 'required',
+            # ДОБАВЛЕНО: Говорим браузеру, что это генерация НОВОГО пароля
+            'autocomplete': 'new-password', 
         }),
         error_messages={'min_length': 'Пароль должен содержать не менее 8 символов.'} 
     )
     password2 = forms.CharField(
         label="Подтверждение пароля",
-        min_length=8, # <--- ДОБАВЛЕНО
+        min_length=8,
         widget=forms.PasswordInput(attrs={
             'class': 'form-control', 
             'placeholder': 'Повторите пароль',
-            'required': 'required'
+            'required': 'required',
+            # ДОБАВЛЕНО: Подсказка для повтора нового пароля
+            'autocomplete': 'new-password', 
         })
     )
+
 
     class Meta:
         model = User

@@ -39,7 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'articles',
     
-    'users',
+    #'users',
      # ← Добавь сюда
 ]
 
@@ -121,10 +121,10 @@ USE_TZ = True
 
 STATIC_URL = 'static/' 
 STATICFILES_DIRS = [
-    BASE_DIR / "static",
+    #BASE_DIR / "static",
     BASE_DIR / "articles" / "static",
-    BASE_DIR / "water_project" / "static",
-    BASE_DIR / "users" / "static",
+    #BASE_DIR / "water_project" / "static",
+    #BASE_DIR / "users" / "static",
 
 ]
 STATIC_ROOT = BASE_DIR / "staticfiles"
