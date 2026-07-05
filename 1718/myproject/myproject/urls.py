@@ -24,9 +24,12 @@ from django.conf.urls.static import static
 from django.conf import settings
 
 urlpatterns = [
-   path('admin/', admin.site.urls),
+   #path('admin/', admin.site.urls),
+    path('hidden-entrance-99/', admin.site.urls),
+
+
+    #path('cекретное слово/', admin.site.urls),
     
-    # ЭТОЙ СТРОКИ ДОСТАТОЧНО (она подключит всё из articles/urls.py)
     path('', include('articles.urls')),  
     
     # Настройки авторизации (лучше держать здесь)
