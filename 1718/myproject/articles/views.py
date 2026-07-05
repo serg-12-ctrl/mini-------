@@ -490,7 +490,7 @@ def question_detail(request, question_id):
     
     if request.method == 'POST':
         if not request.user.is_authenticated:
-            return redirect('login') # Или на вашу страницу авторизации
+            return redirect('login')
             
         form = AnswerForm(request.POST)
         if form.is_valid():
@@ -498,7 +498,8 @@ def question_detail(request, question_id):
             answer.question = question
             answer.author = request.user
             answer.save()
-            return redirect('articles/question_detail', question_id=question.id)
+            # ИСПРАВЛЕНО: имя маршрута берем из urls.py (без слэшей и папок)
+            return redirect('question_detail', question_id=question.id)
     else:
         form = AnswerForm()
         
@@ -507,8 +508,9 @@ def question_detail(request, question_id):
         'answers': answers,
         'form': form
     }
-    #return render(request, 'forum/question_detail.html', context)
-    return render(request, 'question_detail.html', context)
+    
+    return render(request, 'articles/question_detail.html', context)
+
 
 from django.core.exceptions import PermissionDenied
 
