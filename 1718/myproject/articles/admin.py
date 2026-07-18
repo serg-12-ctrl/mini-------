@@ -23,9 +23,28 @@ class SavedArticleAdmin(admin.ModelAdmin):
 
 @admin.register(Comment)
 class CommentAdmin(admin.ModelAdmin):
-    list_display = ['user', 'article', 'created_at']
-    list_filter = ['created_at', 'user', 'article']
+    # Добавили 'short_text' для красоты и 'is_approved' для отображения галочки/крестика
+    list_display = ['user', 'article', 'short_text', 'is_approved', 'created_at']
+    # Добавили 'is_approved' в фильтры справа, чтобы легко находить неодобренные
+    list_filter = ['is_approved', 'created_at', 'user', 'article']
     search_fields = ['text', 'user__username']
+    
+    # Регистрируем наше массовое действие
+    actions = ['approve_comments']
+
+    def short_text(self, obj):
+        """Обрезает длинный текст комментария в таблице админки до 50 символов."""
+        return obj.text[:50] + '...' if len(obj.text) > 50 else obj.text
+    short_text.short_description = 'Текст комментария'
+
+    def approve_comments(self, request, queryset):
+        """Массово одобряет выбранные галочками комментарии."""
+        updated = queryset.update(is_approved=True)
+        self.message_user(request, f'Успешно одобрено комментариев: {updated}.')
+    
+    # Текст, который появится в выпадающем списке действий
+    approve_comments.short_description = 'Одобрить выбранные комментарии'
+
 
 @admin.register(FAQ)
 class FAQAdmin(admin.ModelAdmin):

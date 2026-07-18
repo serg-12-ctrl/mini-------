@@ -6,6 +6,12 @@ from PIL import Image
 import os 
 from django.contrib.auth.models import User
 
+from django.db import models
+from django.contrib.auth.models import User
+
+
+
+
 class Forum(models.Model):
     title = models.CharField(max_length=200, verbose_name="Название форума")
     description = models.TextField(verbose_name="Описание")
@@ -118,6 +124,9 @@ class Comment(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='Пользователь')
     text = models.TextField(verbose_name='Комментарий')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата создания')
+    
+    # НОВОЕ ПОЛЕ ДЛЯ ПРЕМОДЕРАЦИИ
+    is_approved = models.BooleanField(default=False, verbose_name='Одобрен')
 
     def __str__(self):
         return f'Комментарий от {self.user.username} к статье {self.article.title}'
@@ -126,6 +135,11 @@ class Comment(models.Model):
         ordering = ['created_at']
         verbose_name='Комментарий'
         verbose_name_plural = 'Комментарии'
+
+
+
+
+
 
 class SiteStatistic(models.Model):
     # Связываем запись статистики с конкретным пользователем
@@ -147,3 +161,8 @@ class Answer(models.Model):
 
     def __str__(self):
         return f"Ответ от {self.author.username} к теме {self.question.title}"
+
+
+# Импортируйте вашу модель статьи, например:
+# from .models import Article 
+

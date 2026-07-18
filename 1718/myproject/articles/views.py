@@ -28,6 +28,8 @@ from .models import Forum, Question
 from .forms import QuestionForm
 from typing import Union
 from .forms import CyrillicUserCreationForm
+from django.contrib import messages
+from .models import Article, Comment
 
 
 @login_required
@@ -172,6 +174,8 @@ def article_list(request) -> HttpResponse:
     }
     return render(request, 'articles/articles_list.html', context)
 
+from django.contrib import messages  # Импортируем модуль сообщений Django
+
 def article_detail(request, pk: int) -> HttpResponse:
     """Отображает полную статью, форму добавления и список комментариев.
 
@@ -183,7 +187,9 @@ def article_detail(request, pk: int) -> HttpResponse:
         HttpResponse: Страница детального просмотра статьи.
     """
     article = get_object_or_404(Article, pk=pk)
-    comments = Comment.objects.filter(article=article).select_related('user')
+    
+    # ИЗМЕНЕНИЕ 1: Добавляем фильтр is_approved=True, чтобы отображать только одобренные комментарии
+    comments = Comment.objects.filter(article=article, is_approved=True).select_related('user')
 
     if request.method == "POST":
         if not request.user.is_authenticated:
@@ -195,6 +201,12 @@ def article_detail(request, pk: int) -> HttpResponse:
             comment.article = article
             comment.user = request.user 
             comment.save()
+            
+            # ИЗМЕНЕНИЕ 2: Добавляем уведомление для пользователя
+            messages.success(
+                request, 
+                "Спасибо! Ваш комментарий отправлен на модерацию и появится на сайте после проверки администратором."
+            )
             return redirect('article_detail', pk=pk)
     else:
         form = CommentForm()
@@ -210,6 +222,7 @@ def article_detail(request, pk: int) -> HttpResponse:
         'is_saved': is_saved  
     }
     return render(request, 'articles/article_detail.html', context)
+
 
 @login_required
 def save_article(request, pk: int) -> HttpResponseRedirect:
