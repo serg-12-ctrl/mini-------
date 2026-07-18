@@ -123,17 +123,49 @@ class CyrillicUserCreationForm(forms.ModelForm):
 
 
 
+
+
 class CommentForm(forms.ModelForm):
     class Meta:
         model = Comment
         fields = ['text']
         widgets = {
             'text': forms.Textarea(attrs={
-                'class':'form-control',
+                'class': 'form-control',
                 'rows': 4, 
-                'placeholder': 'Оставьте ваш комментарий....' # Исправлена опечатка в placeholder
+                'placeholder': 'Оставьте ваш комментарий....'
             })
         }
+
+    def clean_text(self):
+        """Автоматическая проверка текста комментария на стоп-слова."""
+        text = self.cleaned_data.get('text')
+        
+        # СПИСОК СТОП-СЛОВ (дополняйте любыми запрещенными словами/фразами)
+        # Все слова для проверки лучше писать маленькими буквами
+        STOP_WORDS = [
+            'спам', 
+            'реклама', 
+            'купить', 
+            'казино',
+            'заработок',
+            'дурак',
+            # Сюда можно вписать любые другие нежелательные или нецензурные слова
+        ]
+        
+        # Переводим текст пользователя в нижний регистр для проверки без учета регистра
+        text_lower = text.lower()
+        
+        # Проверяем наличие стоп-слов
+        for word in STOP_WORDS:
+            if word in text_lower:
+                # Если запрещенное слово найдено, вызываем ошибку валидации
+                raise ValidationError(
+                    "Ваш комментарий содержит недопустимое слово или спам. Пожалуйста, отредактируйте текст."
+                )
+                
+        return text
+
 
 # Форма для статей с полем для фото
 class ArticleForm(forms.ModelForm):
