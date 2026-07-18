@@ -44,5 +44,6 @@ urlpatterns = [
     path('profile/edit/', views.edit_profile, name='edit_profile'),
     path('profile/<str:username>/', views.user_profile, name='user_profile'),
     path('article/create/', views.article_create, name='article_create'),
+    path('article/<int:pk>/like-json/', views.toggle_article_like_json, name='toggle_article_like_json'),
 
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -84,6 +84,27 @@
     <div class="col-md-4">
         <div class="card sticky-top" style="top: 20px; border-radius: 15px;">
             <div class="card-body">
+                
+                <!-- ДОБАВЛЕНО: ДИНАМИЧЕСКИЕ ЛАЙКИ -->
+                <div class="mb-3">
+                    {% if user.is_authenticated %}
+                        <button id="like-btn" 
+                                data-url="{% url 'toggle_article_like_json' article.pk %}" 
+                                data-csrf="{{ csrf_token }}"
+                                class="btn {% if is_liked %}btn-danger{% else %}btn-outline-danger{% endif %} w-100 rounded-pill shadow-sm">
+                            <span id="like-icon">{% if is_liked %}❤️{% else %}🤍{% endif %}</span> 
+                            <span id="like-text">{% if is_liked %}Убрать лайк{% else %}Поставить лайк{% endif %}</span> 
+                            (<span id="like-count">{{ likes_count }}</span>)
+                        </button>
+                    {% else %}
+                        <a href="{% url 'login' %}" class="btn btn-outline-secondary w-100 rounded-pill">
+                            <span class="me-1">🤍</span> Лайков: {{ likes_count }} (Войдите)
+                        </a>
+                    {% endif %}
+                </div>
+                
+                <hr>
+
                 {% if user.is_authenticated %}
                     <!-- Кнопки сохранения с использованием эмодзи вместо отсутствующих иконок -->
                     {% if is_saved %}
@@ -118,4 +139,54 @@
         </div>
     </div>
 </div>
+
+<!-- ДОБАВЛЕНО: Скрипт для мгновенной обработки лайков без перезагрузки -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const likeBtn = document.getElementById('like-btn');
+    
+    if (likeBtn) {
+        likeBtn.addEventListener('click', function() {
+            const url = this.getAttribute('data-url');
+            const csrfToken = this.getAttribute('data-csrf');
+            
+            const likeIcon = document.getElementById('like-icon');
+            const likeText = document.getElementById('like-text');
+            const likeCount = document.getElementById('like-count');
+            
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrfToken,
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Ошибка при обработке запроса');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.liked) {
+                    likeBtn.classList.remove('btn-outline-danger');
+                    likeBtn.classList.add('btn-danger');
+                    likeIcon.textContent = '❤️';
+                    likeText.textContent = 'Убрать лайк';
+                } else {
+                    likeBtn.classList.remove('btn-danger');
+                    likeBtn.classList.add('btn-outline-danger');
+                    likeIcon.textContent = '🤍';
+                    likeText.textContent = 'Поставить лайк';
+                }
+                likeCount.textContent = data.likes_count;
+            })
+            .catch(error => {
+                console.error('Ошибка лайка:', error);
+                alert('Не удалось изменить статус лайка. Пожалуйста, обновите страницу.');
+            });
+        });
+    }
+});
+</script>
 {% endblock %}

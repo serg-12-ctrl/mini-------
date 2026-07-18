@@ -31,6 +31,8 @@ from .forms import CyrillicUserCreationForm
 from django.contrib import messages
 from .models import Article, Comment
 
+from django.http import JsonResponse
+
 
 @login_required
 def generate_report_view(request) -> HttpResponse:
@@ -174,7 +176,7 @@ def article_list(request) -> HttpResponse:
     }
     return render(request, 'articles/articles_list.html', context)
 
-from django.contrib import messages  # Импортируем модуль сообщений Django
+
 
 def article_detail(request, pk: int) -> HttpResponse:
     """Отображает полную статью, форму добавления и список комментариев.
@@ -212,16 +214,23 @@ def article_detail(request, pk: int) -> HttpResponse:
         form = CommentForm()
 
     is_saved = False
+    is_liked = False  # ДОБАВЛЕНО: переменная для статуса лайка текущего пользователя
+    
     if request.user.is_authenticated:
         is_saved = SavedArticle.objects.filter(user=request.user, article=article).exists()
+        # ДОБАВЛЕНО: проверяем, поставил ли лайк именно этот пользователь
+        is_liked = article.likes.filter(id=request.user.id).exists()
 
     context = {
         'article': article,
         'comments': comments,
         'form': form,
-        'is_saved': is_saved  
+        'is_saved': is_saved,
+        'is_liked': is_liked,                  # ДОБАВЛЕНО в контекст
+        'likes_count': article.likes.count()    # ДОБАВЛЕНО в контекст (общее число лайков)
     }
     return render(request, 'articles/article_detail.html', context)
+
 
 
 @login_required
@@ -665,3 +674,24 @@ def create_article_view(request: HttpRequest) -> HttpResponse:
                 user=request.user,
                 action=f"Опубликована статья: {meta['title']}"  # Используем данные из словаря
             )
+
+@login_required
+def toggle_article_like_json(request, pk: int) -> JsonResponse:
+    """Добавляет/удаляет лайк статьи и возвращает JSON-ответ для JavaScript."""
+    if request.method == "POST":
+        article = get_object_or_404(Article, pk=pk)
+        user = request.user
+        
+        if article.likes.filter(id=user.id).exists():
+            article.likes.remove(user)
+            liked = False
+        else:
+            article.likes.add(user)
+            liked = True
+            
+        return JsonResponse({
+            'liked': liked,
+            'likes_count': article.likes.count()
+        })
+        
+    return JsonResponse({'error': 'Invalid request method'}, status=400)

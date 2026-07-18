@@ -67,6 +67,9 @@ class Article(models.Model):
     pub_date = models.DateTimeField(default=timezone.now, verbose_name='Дата публикации')
     tags = models.ManyToManyField(Tag, blank=True, verbose_name='Теги')
     is_public = models.BooleanField(default=True, verbose_name='Публичная статья')
+    
+    # НОВОЕ ПОЛЕ ДЛЯ СИСТЕМЫ ЛАЙКОВ
+    likes = models.ManyToManyField(User, related_name='liked_articles', blank=True, verbose_name='Лайки')
 
     def save(self, *args, **kwargs):
         # Сначала сохраняем объект, чтобы файл записался на диск
@@ -86,12 +89,14 @@ class Article(models.Model):
                 # Перезаписываем файл в том же качестве
                 img.save(self.image.path, quality=90)
             
-        
         if self.image:
             # Выводим размеры ДО или ПОСЛЕ сжатия
             print(f"--- Файл: {self.image.name} ---")
             print(f"--- Разрешение: {self.image.width}x{self.image.height}px ---")
             print(f"--- Вес: {os.path.getsize(self.image.path) / 1024:.2f} Кб ---")
+
+    def __str__(self):
+        return self.title
 
 
     def __str__(self):
