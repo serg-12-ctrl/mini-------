@@ -1,15 +1,49 @@
 <h1>Профиль пользователя: {{ profile_user.username }}</h1>
+
+<!-- ИЗМЕНЕНИЕ: Вывод системного бейджа роли пользователя на форуме -->
+<p>
+    <strong>Статус на форуме:</strong> 
+    {% if profile_user.profile.role == 'expert' %}
+        <span style="background-color: #d1ecf1; color: #0c5460; padding: 3px 8px; border-radius: 4px; font-weight: bold; font-size: 0.9em;">
+            Проверенный эксперт ✅
+        </span>
+    {% elif profile_user.profile.role == 'moderator' %}
+        <span style="background-color: #fff3cd; color: #856404; padding: 3px 8px; border-radius: 4px; font-weight: bold; font-size: 0.9em;">
+            Модератор 🛡️
+        </span>
+    {% elif profile_user.profile.role == 'admin' or profile_user.is_superuser %}
+        <span style="background-color: #f8d7da; color: #721c24; padding: 3px 8px; border-radius: 4px; font-weight: bold; font-size: 0.9em;">
+            Администратор ⚙️
+        </span>
+    {% else %}
+        <span style="background-color: #e2e3e5; color: #383d41; padding: 3px 8px; border-radius: 4px; font-size: 0.9em;">
+            Пользователь
+        </span>
+    {% endif %}
+</p>
+
 <p><strong>Имя:</strong> {{ profile_user.first_name|default:"Не указано" }}</p>
 <p><strong>Фамилия:</strong> {{ profile_user.last_name|default:"Не указано" }}</p>
 <p><strong>Email:</strong> {{ profile_user.email|default:"Скрыт или не указан" }}</p>
 <p><strong>Дата регистрации:</strong> {{ profile_user.date_joined|date:"d.m.Y" }}</p>
 
-<!-- Если это профиль текущего вошедшего пользователя, показываем кнопку редактирования -->
+<!-- Если это профиль текущего вошедшего пользователя, показываем кнопки управления -->
 {% if profile_user == user %}
-    <p><a href="{% url 'edit_profile' %}" style="font-weight: bold; color: #007bff;">Редактировать профиль</a></p>
+    <div style="margin-top: 15px; display: flex; gap: 20px; align-items: center;">
+        <p style="margin: 0;"><a href="{% url 'edit_profile' %}" style="font-weight: bold; color: #007bff; text-decoration: none;">Редактировать профиль</a></p>
+        
+        <!-- ИЗМЕНЕНИЕ: Кнопка «Стать экспертом» появляется ТОЛЬКО у хозяина профиля и ТОЛЬКО если у него базовая роль -->
+        {% if user.profile.role == 'user' %}
+            <p style="margin: 0;">
+                <a href="{% url 'apply_to_expert' %}" style="font-weight: bold; color: #28a745; text-decoration: none; border: 1px solid #28a745; padding: 4px 10px; border-radius: 4px; background-color: #f8fff9;">
+                    Стать экспертом 📄
+                </a>
+            </p>
+        {% endif %}
+    </div>
 {% endif %}
 
-<hr>
+<hr style="margin-top: 25px; border: 0; border-top: 1px solid #dee2e6;">
 
 <div style="display: flex; gap: 40px;">
     <!-- Список вопросов пользователя -->

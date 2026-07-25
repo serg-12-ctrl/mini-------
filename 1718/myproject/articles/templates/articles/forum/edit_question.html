@@ -1,7 +1,16 @@
+{% if is_mod and question.author != user %}
+    <!-- Блок-предупреждение, который увидит ТОЛЬКО модератор при правке чужого вопроса -->
+    <div style="background-color: #fff3cd; color: #856404; padding: 12px; border: 1px solid #ffeeba; border-radius: 4px; margin-bottom: 20px;">
+        <strong>🛡️ Режим модерации:</strong> Вы редактируете вопрос пользователя <strong>@{{ question.author.username }}</strong>. Действие будет записано в журнал аудита.
+    </div>
+{% endif %}
+
 <h1>Редактирование вопроса</h1>
+
 <form method="post">
     {% csrf_token %}
     {{ form.as_p }}
     <button type="submit">Сохранить изменения</button>
 </form>
+
 <p><a href="{% url 'question_detail' question.id %}">Отмена</a></p>

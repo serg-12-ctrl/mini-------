@@ -32,7 +32,7 @@ from django.contrib import messages
 from .models import Article, Comment
 
 from django.http import JsonResponse
-
+from django.urls import reverse
 
 @login_required
 def generate_report_view(request) -> HttpResponse:
@@ -506,10 +506,17 @@ from .models import Answer
 from .forms import AnswerForm
 
 # Детали вопроса + добавление ответа на той же странице
+from .forms import AnswerForm  # Убедитесь, что класс вашей формы ответов называется именно так
+from .models import Answer, Notification
+
 def question_detail(request, question_id):
     question = get_object_or_404(Question, id=question_id)
-    answers = question.answers.all().order_by('created_at') # Старые ответы вверху
+    answers = question.answers.all()
     
+    # Передаем в функцию САМ ФОРУМ текущего вопроса для проверки прав модератора
+    is_mod = is_moderator_or_admin(request.user, question.forum)
+    
+    # 1. ОБРАБОТКА ОТПРАВКИ ФОРМЫ (POST-запрос)
     if request.method == 'POST':
         if not request.user.is_authenticated:
             return redirect('login')
@@ -517,21 +524,34 @@ def question_detail(request, question_id):
         form = AnswerForm(request.POST)
         if form.is_valid():
             answer = form.save(commit=False)
-            answer.question = question
             answer.author = request.user
+            answer.question = question
             answer.save()
-            # ИСПРАВЛЕНО: имя маршрута берем из urls.py (без слэшей и папок)
+            
+            # АВТОМАТИЗАЦИЯ: Отправляем уведомление автору вопроса, если ему ответил другой пользователь
+            if question.author != request.user:
+                Notification.objects.create(
+                    user=question.author,
+                    text=f"Пользователь @{request.user.username} оставил ответ в вашей теме '{question.title}'",
+                    link=reverse('question_detail', kwargs={'question_id': question.id})
+                )
+                
+            # Перезагружаем страницу после успешной отправки ответа
             return redirect('question_detail', question_id=question.id)
     else:
+        # 2. ОБРАБОТКАОБЫЧНОГО ЗАХОДА НА СТРАНИЦУ (GET-запрос)
+        # Инициализируем пустую форму, чтобы элементы ввода появились на фронтенде
         form = AnswerForm()
-        
+    
+    # Передаем ВСЕ переменные, включая 'form', в контекст шаблона
     context = {
         'question': question,
         'answers': answers,
-        'form': form
+        'is_mod': is_mod,
+        'form': form  # КРИТИЧЕСКИ ВАЖНО: теперь форма вернется на фронтенд!
     }
-    
     return render(request, 'articles/question_detail.html', context)
+
 
 
 from django.core.exceptions import PermissionDenied
@@ -539,60 +559,126 @@ from django.core.exceptions import PermissionDenied
 # Редактирование вопроса
 @login_required
 def edit_question(request, question_id):
+    """
+    Редактирование вопроса (темы) автором или уполномоченным модератором.
+    """
     question = get_object_or_404(Question, id=question_id)
-    if question.author != request.user:
-        raise PermissionDenied  # Защита: чужой вопрос редактировать нельзя
-        
+    forum = question.forum
+
+    # Проверка прав: редактировать может либо сам автор, либо модератор/админ этого форума
+    if request.user != question.author and not is_moderator_or_admin(request.user, forum):
+        raise PermissionDenied("У вас нет прав на редактирование этой темы.")
+
     if request.method == 'POST':
-        form = QuestionForm(request.POST, instance=question)
-        if form.is_valid():
-            form.save()
-            return redirect('question_detail', question_id=question.id)
-    else:
-        form = QuestionForm(instance=question)
-    return render(request, 'edit_question.html', {'form': form, 'question': question})
+        old_title = question.title
+        # Получаем данные из пришедшей формы (предполагается использование стандартной формы или request.POST)
+        question.title = request.POST.get('title', question.title)
+        question.content = request.POST.get('content', question.content)
+        question.save()
+
+        # ЛОГИРОВАНИЕ: если изменения внес модератор, фиксируем это в аудит
+        if request.user != question.author:
+            log_action = f"Модератор изменил тему '{old_title}' (ID: {question.id}) автора {question.author.username}"
+            SiteStatistic.objects.create(user=request.user, action=log_action)
+
+        return redirect('question_detail', question_id=question.id)
+
+    # Для отображения формы передаем флаг модератора, чтобы кастомизировать UI
+    is_mod = is_moderator_or_admin(request.user, forum)
+    return render(request, 'forum/edit_question.html', {'question': question, 'is_mod': is_mod})
 
 # Удаление вопроса
 @login_required
 def delete_question(request, question_id):
     question = get_object_or_404(Question, id=question_id)
-    if question.author != request.user:
-        raise PermissionDenied
-        
-    forum_id = question.forum.id
+    forum = question.forum
+
+    if request.user != question.author and not is_moderator_or_admin(request.user, forum):
+        raise PermissionDenied("У вас нет права удалять чужие темы.")
+
     if request.method == 'POST':
+        # АВТОМАТИЗАЦИЯ: Если тему удаляет МОДЕРАТОР, отправляем уведомление автору вопроса
+        if request.user != question.author:
+            Notification.objects.create(
+                user=question.author, # Кому придет сообщение
+                text=f"Ваша тема '{question.title}' на форуме была удалена модератором @{request.user.username} за оффтоп или нарушение правил."
+            )
+            # Журнал аудита для админа
+            SiteStatistic.objects.create(
+                user=request.user, 
+                action=f"Удалена тема '{question.title}' автора {question.author.username}"
+            )
+            
         question.delete()
-        return redirect('forum_detail', forum_id=forum_id)
-    return render(request, 'forum/delete_confirm.html', {'object': question, 'back_url': redirect('question_detail', question_id=question.id).url})
+        return redirect('forum_detail', forum_id=forum.id) 
+        
+    return render(request, 'forum/confirm_delete.html', {'object': question})
 
 # Редактирование ответа
 @login_required
 def edit_answer(request, answer_id):
+    """
+    Редактирование конкретного ответа (сообщения) автором или модератором форума.
+    """
     answer = get_object_or_404(Answer, id=answer_id)
-    if answer.author != request.user:
-        raise PermissionDenied
-        
+    forum = answer.question.forum
+
+    if request.user != answer.author and not is_moderator_or_admin(request.user, forum):
+        raise PermissionDenied("У вас нет прав на изменение этого сообщения.")
+
     if request.method == 'POST':
-        form = AnswerForm(request.POST, instance=answer)
-        if form.is_valid():
-            form.save()
-            return redirect('question_detail', question_id=answer.question.id)
-    else:
-        form = AnswerForm(instance=answer)
-    return render(request, 'edit_answer.html', {'form': form, 'answer': answer})
+        answer.content = request.POST.get('content', answer.content)
+        answer.save()
+
+        # ЛОГИРОВАНИЕ: фиксация факта модерации текста ответа
+        if request.user != answer.author:
+            log_action = f"Модератор отредактировал ответ пользователя {answer.author.username} в теме '{answer.question.title}'"
+            SiteStatistic.objects.create(user=request.user, action=log_action)
+
+        return redirect('question_detail', question_id=answer.question.id)
+
+    is_mod = is_moderator_or_admin(request.user, forum)
+    return render(request, 'forum/edit_answer.html', {'answer': answer, 'is_mod': is_mod})
 
 # Удаление ответа
 @login_required
 def delete_answer(request, answer_id):
+    """
+    Удаление ответа (сообщения) за оффтоп или оскорбления с фиксацией в аудит
+    и отправкой мгновенного уведомления автору.
+    """
     answer = get_object_or_404(Answer, id=answer_id)
-    if answer.author != request.user:
-        raise PermissionDenied
-        
-    question_id = answer.question.id
+    question = answer.question
+    forum = question.forum
+
+    # Проверка прав: удалить может либо сам автор ответа, либо модератор/админ этого форума
+    if request.user != answer.author and not is_moderator_or_admin(request.user, forum):
+        raise PermissionDenied("У вас нет прав на удаление этого сообщения.")
+
     if request.method == 'POST':
+        question_id = question.id
+        
+        # Если сообщение удаляет НЕ сам автор (то есть удаляет модератор или админ)
+        if request.user != answer.author:
+            
+            # 1. ОТПРАВКА УВЕДОМЛЕНИЯ ПОСТРАДАВШЕМУ ПОЛЬЗОВАТЕЛЮ
+            Notification.objects.create(
+                user=answer.author,  # Кому: автору УДАЛЕННОГО ответа (а не вопроса!)
+                text=f"Ваш ответ в теме '{question.title}' был удален модератором @{request.user.username} за оффтоп или нарушение правил."
+                # link не передаем, так как ответ физически удален, переходить некуда
+            )
+            
+            # 2. ФИКСАЦИЯ В ЖУРНАЛЕ АУДИТА ДЛЯ ГЛАВНОГО АДМИНА
+            SiteStatistic.objects.create(
+                user=request.user,
+                action=f"Модератор @{request.user.username} удалил ответ пользователя {answer.author.username} в теме '{question.title}'"
+            )
+
+        # Физически удаляем запись из Базы Данных
         answer.delete()
         return redirect('question_detail', question_id=question_id)
-    return render(request, 'forum/delete_confirm.html', {'object': answer, 'back_url': redirect('question_detail', question_id=question_id).url})
+
+    return render(request, 'forum/confirm_delete.html', {'object': answer})
 
 
 
@@ -695,3 +781,138 @@ def toggle_article_like_json(request, pk: int) -> JsonResponse:
         })
         
     return JsonResponse({'error': 'Invalid request method'}, status=400)
+
+
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from django.http import HttpResponseForbidden
+from django.core.exceptions import PermissionDenied
+from .models import Forum, Question, Answer, ModeratorAssignment
+
+def is_moderator_or_admin(user, forum=None):
+    if not user.is_authenticated:
+        return False
+    
+    # Администраторы и суперпользователи имеют доступ везде
+    if user.is_superuser or user.profile.role == 'admin':
+        return True
+        
+    # Проверяем роль модератора
+    if user.profile.role == 'moderator':
+        if forum is None:
+            return ModeratorAssignment.objects.filter(user=user).exists()
+        else:
+            # СТРОГАЯ ПРОВЕРКА: ищем запись, где этот юзер привязан к этому конкретному форуму
+            return ModeratorAssignment.objects.filter(user=user, forum=forum).exists()
+            
+    return False
+
+
+@login_required
+def delete_question(request, question_id):
+    """
+    Удаление вопроса (темы) модератором или автором.
+    """
+    question = get_object_or_404(Question, id=question_id)
+    forum = question.forum
+
+    # Проверяем, имеет ли право пользователь удалить эту тему
+    # (Удалить может либо сам автор, либо уполномоченный модератор форума)
+    if request.user != question.author and not is_moderator_or_admin(request.user, forum):
+        raise PermissionDenied("У вас нет прав на удаление этой темы.")
+
+    if request.method == 'POST':
+        question.delete()
+        # После удаления возвращаем модератора на страницу форума
+        return redirect('forum_detail', forum_id=forum.id) 
+        
+    return render(request, 'forum/confirm_delete.html', {'object': question})
+
+
+@login_required
+def delete_answer(request, answer_id):
+    """
+    Удаление конкретного ответа (сообщения) в теме за оффтоп или оскорбления.
+    """
+    answer = get_object_or_404(Answer, id=answer_id)
+    forum = answer.question.forum
+
+    if request.user != answer.author and not is_moderator_or_admin(request.user, forum):
+        raise PermissionDenied("У вас нет прав на удаление этого сообщения.")
+
+    if request.method == 'POST':
+        question_id = answer.question.id
+        answer.delete()
+        # Возвращаем в ту же тему, где шло обсуждение
+        return redirect('question_detail', question_id=question_id)
+
+    return render(request, 'forum/confirm_delete.html', {'object': answer})
+
+
+@login_required
+def apply_to_expert(request):
+    """
+    Отображение и обработка формы подачи заявки на статус Эксперта.
+    """
+    if request.method == 'POST':
+        specialization = request.POST.get('specialization')
+        documents = request.FILES.get('documents')
+
+        # Сохраняем анкету в Базу Данных
+        ExpertApplication.objects.create(
+            user=request.user,
+            specialization=specialization,
+            documents=documents
+        )
+        # Перенаправляем пользователя в его личный кабинет после успешной отправки
+        # Если имя маршрута вашего профиля отличается, замените 'user_profile'
+        return redirect('user_profile', username=request.user.username)
+
+    return render(request, 'forum/apply_expert.html')
+
+
+@login_required
+def approve_expert_admin(request, application_id):
+    """
+    Внутренний Backend-эндпоинт для быстрого одобрения заявки Администратором.
+    """
+    # Защита: проверяем, является ли текущий пользователь Администратором
+    if request.user.profile.role != 'admin' and not request.user.is_superuser:
+        return HttpResponseForbidden("У вас нет прав для выполнения этого действия.")
+
+    application = get_object_or_404(ExpertApplication, id=application_id)
+    application.status = 'approved'
+    application.save()
+
+    # Автоматически находим профиль кандидата и меняем его роль на "expert"
+    candidate_profile = application.user.profile
+    candidate_profile.role = 'expert'
+    candidate_profile.save()
+
+    # Перенаправляем обратно в панель управления (встроенную админку Django)
+    return redirect('admin:articles_expertapplication_changelist')
+
+
+
+
+from django.contrib.auth.decorators import login_required
+from .models import Notification  # Обязательно импортируем модель уведомлений
+
+# =====================================================================
+# ЦЕНТР УВЕДОМЛЕНИЙ («КОЛОКОЛЬЧИК»)
+# =====================================================================
+
+@login_required
+def notifications_list(request):
+    """
+    Выводит список всех уведомлений пользователя и автоматически 
+    отмечает их как прочитанные при посещении страницы.
+    """
+    # Получаем все уведомления текущего авторизованного пользователя
+    user_notifications = request.user.notifications.all()
+    
+    # Меняем статус непрочитанных уведомлений на "Прочитано"
+    request.user.notifications.filter(is_read=False).update(is_read=True)
+    
+    # Передаем данные в HTML-шаблон
+    return render(request, 'articles/notifications.html', {'notifications': user_notifications})

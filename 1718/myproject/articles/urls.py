@@ -28,7 +28,7 @@ urlpatterns = [
     path('generate-report/', views.export_report_csv, name='generate_report'),
     
     # --- МАРШРУТЫ ФОРУМА (Добавлен префикс forums/) ---
-    path('forums/', views.forum_list, name='forum_list'),  # Теперь форум доступен по адресу /forums/
+    path('forums/', views.forum_list, name='forum_list'),  
     path('forums/<int:forum_id>/', views.forum_detail, name='forum_detail'),
     path('forums/<int:forum_id>/ask/', views.create_question, name='create_question'),
     
@@ -40,10 +40,18 @@ urlpatterns = [
     path('answer/<int:answer_id>/edit/', views.edit_answer, name='edit_answer'),
     path('answer/<int:answer_id>/delete/', views.delete_answer, name='delete_answer'),
 
-    # --- Профили пользователей ---
+    # --- Профили пользователей и Верификация ---
     path('profile/edit/', views.edit_profile, name='edit_profile'),
+    path('profile/expert/apply/', views.apply_to_expert, name='apply_to_expert'),
+    
+    # ИСПРАВЛЕНО: Добавлен потерянный маршрут для Центра уведомлений
+    path('profile/notifications/', views.notifications_list, name='notifications_list'),
+    
     path('profile/<str:username>/', views.user_profile, name='user_profile'),
     path('article/create/', views.article_create, name='article_create'),
     path('article/<int:pk>/like-json/', views.toggle_article_like_json, name='toggle_article_like_json'),
+    
+    # --- Панель Администратора: Модерация Экспертов (Backend-API) ---
+    path('admin-panel/applications/<int:application_id>/approve/', views.approve_expert_admin, name='approve_expert_admin'),
 
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

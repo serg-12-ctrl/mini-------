@@ -66,10 +66,14 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                
+                # ДОБАВЛЕНО: Автоматическая передача счетчика колокольчика во все шаблоны
+                'articles.context_processors.notifications_processor',
             ],
         },
     },
 ]
+
 
 WSGI_APPLICATION = 'myproject.wsgi.application'
 
@@ -152,3 +156,9 @@ CACHES = {
 # Настройки для загружаемых файлов (изображений)
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+TELEGRAM_BOT_TOKEN = '8611946635:AAGzQHtRBE1qthjaUMKAtCOnbLVsDljAM4E'
+TELEGRAM_ADMIN_CHAT_ID = '1670740429'
+
+# Ссылка собрана БЕЗ ОШИБОК:
+TELEGRAM_API_URL = f"https://telegram.org{TELEGRAM_BOT_TOKEN}/sendMessage"

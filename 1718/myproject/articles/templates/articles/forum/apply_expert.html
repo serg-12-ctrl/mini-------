@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Навигационная цепочка (Breadcrumbs) -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb bg-light p-2 rounded shadow-sm">
+            <li class="breadcrumb-item"><a href="{% url 'forum_list' %}" class="text-decoration-none"><i class="bi bi-chat-square-text"></i> Форумы</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'user_profile' user.username %}" class="text-decoration-none">Личный кабинет</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Заявка на верификацию</li>
+        </ol>
+    </nav>
+
+    <div class="row justify-content-center mb-5">
+        <div class="col-md-8">
+            <!-- Информационная карточка -->
+            <div class="card shadow-sm border-0 rounded-3 overflow-hidden mb-4">
+                <div class="card-header bg-dark text-white p-3">
+                    <h3 class="fw-bold mb-0 h4"><i class="bi bi-patch-check-fill text-info"></i> Получение статуса «Проверенный эксперт»</h3>
+                </div>
+                <div class="card-body p-4 text-secondary lh-base">
+                    <p class="mb-3">Статус эксперта позволяет вам публиковать официальные инструкции, гайды и помогать пользователям с ремонтом и обходом санкционных блокировок импортной техники.</p>
+                    <div class="alert alert-info border-0 shadow-sm d-flex align-items-center mb-0" role="alert">
+                        <i class="bi bi-info-circle-fill fs-4 me-3 text-primary"></i>
+                        <div>
+                            Ваша анкета будет проверена <strong>Администратором</strong> вручную. Пожалуйста, укажите реальный опыт и прикрепите подтверждающие документы (сертификаты, дипломы, трудовую книжку).
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Форма подачи заявки -->
+            <div class="card shadow-sm border-0 rounded-3">
+                <div class="card-body p-4">
+                    <!-- ВАЖНО: enctype="multipart/form-data" необходим для корректной отправки файлов на бэкенд -->
+                    <form method="post" enctype="multipart/form-data" class="needs-validation">
+                        {% csrf_token %}
+
+                        <!-- Поле специализации -->
+                        <div class="mb-4">
+                            <label for="specialization" class="form-label fw-bold text-dark">Ваша специализация и опыт работы:</label>
+                            <textarea class="form-control" id="specialization" name="specialization" rows="5" 
+                                      placeholder="Опишите, с какими брендами импортной техники вы работаете (например: промышленное ПО Siemens, диагностика BMW, ремонт плат Apple) и ваш стаж..." required></textarea>
+                            <div class="form-text text-muted">Опишите ваш опыт максимально подробно, это ускорит проверку администратором.</div>
+                        </div>
+
+                        <!-- Поле загрузки документов -->
+                        <div class="mb-4">
+                            <label for="documents" class="form-label fw-bold text-dark">Подтверждающие документы (Скан / Фото):</label>
+                            <input class="form-control" type="file" id="documents" name="documents" accept=".jpg,.jpeg,.png,.pdf" required>
+                            <div class="form-text text-muted">Разрешенные форматы: JPG, PNG, PDF. Максимальный размер файла — 10 МБ.</div>
+                        </div>
+
+                        <!-- Кнопки управления -->
+                        <div class="d-flex justify-content-between align-items-center border-top pt-3 mt-4">
+                            <a href="{% url 'user_profile' user.username %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left"></i> Отмена
+                            </a>
+                            <button type="submit" class="btn btn-primary px-4 fw-bold shadow-sm">
+                                <i class="bi bi-send-check"></i> Отправить на проверку
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}
